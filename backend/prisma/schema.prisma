@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CoinTransactionType {
+  PURCHASE
+  EPISODE_UNLOCK
+  DAILY_REWARD
+  REFERRAL
+}
+
+enum EpisodeAccessType {
+  FREE
+  COIN_LOCKED
+  VIP_ONLY
+}
+
+enum PaymentType {
+  SUBSCRIPTION
+  COIN_PACK
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+// 1. Users & Profiles
+model User {
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  firebaseUid   String    @unique @map("firebase_uid") @db.VarChar(128)
+  phone         String?   @db.VarChar(20)
+  email         String?   @db.VarChar(255)
+  role          Role      @default(USER)
+  isVip         Boolean   @default(false) @map("is_vip")
+  vipExpiresAt  DateTime? @map("vip_expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  wallet            CoinWallet?
+  coinTransactions  CoinTransaction[]
+  unlockedEpisodes  UserUnlockedEpisode[]
+  watchProgress     WatchProgress[]
+  paymentOrders     PaymentOrder[]
+
+  @@map("users")
+}
+
+// 2. Virtual Currency & Wallets
+model CoinWallet {
+  userId    String   @id @map("user_id") @db.VarChar(36)
+  balance   Int      @default(0) @db.UnsignedInt
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("coin_wallets")
+}
+
+model CoinTransaction {
+  id          String              @id @default(uuid()) @db.VarChar(36)
+  userId      String              @map("user_id") @db.VarChar(36)
+  amount      Int
+  type        CoinTransactionType
+  referenceId String?             @map("reference_id") @db.VarChar(100)
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("coin_transactions")
+}
+
+// 3. Content Hierarchy
+model Genre {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(100)
+  slug String @unique @db.VarChar(100)
+
+  series SeriesGenre[]
+
+  @@map("genres")
+}
+
+model Series {
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  title        String    @db.VarChar(255)
+  slug         String    @unique @db.VarChar(255)
+  description  String?   @db.Text
+  thumbnailUrl String    @map("thumbnail_url") @db.VarChar(500)
+  bannerUrl    String?   @map("banner_url") @db.VarChar(500)
+  isFeatured   Boolean   @default(false) @map("is_featured")
+  releaseYear  Int?      @map("release_year")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  genres   SeriesGenre[]
+  episodes Episode[]
+
+  @@map("series")
+}
+
+model SeriesGenre {
+  seriesId String @map("series_id") @db.VarChar(36)
+  genreId  Int    @map("genre_id")
+
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  genre  Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([seriesId, genreId])
+  @@map("series_genres")
+}
+
+model Episode {
+  id               String            @id @default(uuid()) @db.VarChar(36)
+  seriesId         String            @map("series_id") @db.VarChar(36)
+  episodeNumber    Int               @map("episode_number")
+  title            String            @db.VarChar(255)
+  description      String?           @db.Text
+  thumbnailUrl     String            @map("thumbnail_url") @db.VarChar(500)
+  durationSeconds  Int               @map("duration_seconds")
+  hlsManifestPath  String            @map("hls_manifest_path") @db.VarChar(500)
+  accessType       EpisodeAccessType @default(COIN_LOCKED) @map("access_type")
+  coinPrice        Int               @default(10) @map("coin_price")
+  createdAt        DateTime          @default(now()) @map("created_at")
+
+  series           Series                 @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  unlockedBy       UserUnlockedEpisode[]
+  watchProgress    WatchProgress[]
+
+  @@map("episodes")
+}
+
+// 4. User Content Access & Unlocks
+model UserUnlockedEpisode {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  userId     String   @map("user_id") @db.VarChar(36)
+  episodeId  String   @map("episode_id") @db.VarChar(36)
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, episodeId])
+  @@map("user_unlocked_episodes")
+}
+
+// 5. Playback History & Watch Progress
+model WatchProgress {
+  userId              String   @map("user_id") @db.VarChar(36)
+  episodeId           String   @map("episode_id") @db.VarChar(36)
+  lastPositionSeconds Int      @map("last_position_seconds")
+  completed           Boolean  @default(false)
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, episodeId])
+  @@map("watch_progress")
+}
+
+// 6. Subscriptions & Payments
+model PaymentOrder {
+  id             String        @id @default(uuid()) @db.VarChar(36)
+  userId         String        @map("user_id") @db.VarChar(36)
+  gatewayOrderId String        @unique @map("gateway_order_id") @db.VarChar(255)
+  amount         Decimal       @db.Decimal(10, 2)
+  currency       String        @default("INR") @db.VarChar(10)
+  type           PaymentType
+  status         PaymentStatus @default(PENDING)
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("payment_orders")
+}
