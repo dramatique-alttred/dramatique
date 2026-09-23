@@ -11,9 +11,10 @@ const GENRE_ICONS: Record<string, string> = {
   'Family Drama': '👨‍👩‍👧', 'Reincarnation': '✨', 'Arranged Marriage': '💍',
 }
 
-export default function CategoriesPage() {
+// ?genre=<name> preselects a genre (home feed "See all" links)
+export default function CategoriesPage({ searchParams }: { searchParams: { genre?: string } }) {
   const { data: MOCK_SERIES = [] } = useAllSeries()
-  const [selected, setSelected] = useState('All')
+  const [selected, setSelected] = useState(searchParams.genre || 'All')
 
   const filtered = selected === 'All'
     ? MOCK_SERIES
