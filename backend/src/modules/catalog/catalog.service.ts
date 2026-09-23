@@ -132,6 +132,14 @@ async function loadLiveSeries(where: Prisma.SeriesWhereInput = {}, take?: number
   return rows.map(r => toDto(r, trendingIds, now))
 }
 
+/** Live series for the given ids, returned in the same order as `ids` */
+export async function loadSeriesByIds(ids: string[]): Promise<SeriesDto[]> {
+  if (!ids.length) return []
+  const rows = await loadLiveSeries({ id: { in: ids } })
+  const byId = new Map(rows.map(s => [s.id, s]))
+  return ids.map(id => byId.get(id)).filter((s): s is SeriesDto => !!s)
+}
+
 function genreWhere(genre: string): Prisma.SeriesWhereInput {
   return {
     genres: {
