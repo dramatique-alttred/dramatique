@@ -11,7 +11,7 @@ const NEW_WINDOW_DAYS = 60
 const TRENDING_COUNT = 4
 const DEFAULT_COIN_PRICE = 5
 
-const LANGUAGE_NAMES: Record<string, string> = {
+export const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English', hi: 'Hindi', ta: 'Tamil', te: 'Telugu', es: 'Spanish', pt: 'Portuguese',
   de: 'German', fr: 'French', ja: 'Japanese', ar: 'Arabic', ko: 'Korean', id: 'Bahasa',
 }

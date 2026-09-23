@@ -1,11 +1,8 @@
 import { prisma } from '../../config/prisma'
+import { HttpError } from '../../lib/http'
 import { applyLedgerEntry, getNumberSetting, isUniqueViolation } from './ledger'
 
-export class HttpError extends Error {
-  constructor(public status: number, message: string, public extra: Record<string, unknown> = {}) {
-    super(message)
-  }
-}
+export { HttpError }
 
 // ── Balance & history ──────────────────────────────────────────
 

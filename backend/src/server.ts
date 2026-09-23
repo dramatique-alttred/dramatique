@@ -6,6 +6,7 @@ import { authRouter } from './modules/auth/auth.routes'
 import { catalogRouter } from './modules/catalog/catalog.routes'
 import { meRouter } from './modules/me/me.routes'
 import { coinsRouter } from './modules/coins/coins.routes'
+import { adminRouter } from './modules/admin/admin.routes'
 
 const app = express()
 
@@ -19,6 +20,7 @@ app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/catalog', catalogRouter)
 app.use('/api/v1/me', meRouter)
 app.use('/api/v1/coins', coinsRouter)
+app.use('/api/v1/admin', adminRouter)
 
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }))
 
