@@ -1,6 +1,8 @@
 import {
   signInWithPopup, signInWithEmailAndPassword, sendSignInLinkToEmail,
   isSignInWithEmailLink, signInWithEmailLink, signOut as firebaseSignOut,
+  signInAnonymously, linkWithPopup, linkWithCredential, signInWithCredential,
+  GoogleAuthProvider, EmailAuthProvider, AuthError,
 } from 'firebase/auth'
 import { firebaseAuth, googleProvider, firebaseConfigured } from './firebase'
 import { apiClient } from './apiClient'
@@ -12,6 +14,17 @@ function requireConfigured() {
     throw new Error('Sign-in is not configured yet — missing NEXT_PUBLIC_FIREBASE_* env vars.')
   }
   return firebaseAuth
+}
+
+// Linking a guest to an account that already exists fails with one of these —
+// then we just sign into that existing account (the guest session is dropped).
+const ALREADY_EXISTS = ['auth/credential-already-in-use', 'auth/email-already-in-use', 'auth/account-exists-with-different-credential']
+
+// ── GUEST (anonymous) — every visitor gets a session so they can watch free
+// episodes, save to My List and build progress before signing up ──────────
+export async function ensureGuestSession() {
+  if (!firebaseConfigured || !firebaseAuth || firebaseAuth.currentUser) return
+  await signInAnonymously(firebaseAuth)
 }
 
 // ── EMAIL + PASSWORD (used by admin login) ──────────────────────────────────────
@@ -35,7 +48,23 @@ export async function signInWithEmail(email: string) {
 // ── GOOGLE ──────────────────────────────────────
 export async function signInWithGoogle() {
   const auth = requireConfigured()
-  await signInWithPopup(auth, googleProvider)
+  const current = auth.currentUser
+  if (!current?.isAnonymous) {
+    await signInWithPopup(auth, googleProvider)
+    return
+  }
+  try {
+    // Upgrade the guest in place: same uid, so My List/progress carry over
+    await linkWithPopup(current, googleProvider)
+    await current.getIdToken(true) // new token reflects the linked provider
+  } catch (err) {
+    const credential = GoogleAuthProvider.credentialFromError(err as AuthError)
+    if (ALREADY_EXISTS.includes((err as AuthError).code) && credential) {
+      await signInWithCredential(auth, credential)
+      return
+    }
+    throw err
+  }
 }
 
 // ── PHONE OTP — not yet implemented; UI marks this "Coming soon" ──────────────────────────────────────
@@ -58,7 +87,18 @@ export async function completeEmailLinkSignIn(url: string) {
   }
   if (!email) return false
 
-  await signInWithEmailLink(auth, email, url)
+  const current = auth.currentUser
+  if (current?.isAnonymous) {
+    try {
+      await linkWithCredential(current, EmailAuthProvider.credentialWithLink(email, url))
+      await current.getIdToken(true)
+    } catch (err) {
+      if (!ALREADY_EXISTS.includes((err as AuthError).code)) throw err
+      await signInWithEmailLink(auth, email, url)
+    }
+  } else {
+    await signInWithEmailLink(auth, email, url)
+  }
   window.localStorage.removeItem(EMAIL_LINK_STORAGE_KEY)
   return true
 }
@@ -79,6 +119,7 @@ export interface Profile {
   avatarUrl: string | null
   role: 'USER' | 'ADMIN'
   isGuest: boolean
+  welcomeBonusGranted: boolean
   isVip: boolean
   vipExpiresAt: string | null
   referralCode: string

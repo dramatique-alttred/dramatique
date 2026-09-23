@@ -25,6 +25,30 @@ export interface Episode {
 export interface SeriesDetail extends Series {
   episodes: Episode[];
 }
+// Series + where this user is in it (continue watching / history)
+export interface WatchedSeries extends Series {
+  last_episode: number;
+  progress: number;       // 0-100
+  watched_at?: string;    // ISO — history only
+}
+export interface SeriesAccess {
+  is_vip: boolean;
+  unlocked_episode_ids: string[];
+  last_episode: number | null;
+}
+export interface DailyRewardStatus {
+  claimed_today: boolean;
+  streak: number;
+  reward: number;
+}
+export interface CoinTransaction {
+  id: string;
+  type: 'PURCHASE' | 'EPISODE_UNLOCK' | 'DAILY_REWARD' | 'REFERRAL_BONUS' | 'WELCOME_BONUS' | 'AD_REWARD' | 'ADMIN_ADJUSTMENT' | 'REFUND';
+  description: string | null;
+  amount: number;         // +credit / -debit
+  balance_after: number;
+  created_at: string;
+}
 export interface GenreCategory {
   id: number; name: string; slug: string; icon: string | null; color: string | null;
   genres: { id: number; name: string; slug: string; icon: string | null }[];

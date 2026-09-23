@@ -1,14 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import EmptyState from '@/components/ui/EmptyState'
-import { useSeriesDetail, useAllSeries } from '@/hooks'
+import { useSeriesDetail, useRecommended, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star } from 'lucide-react'
 
-function EpisodeGrid({ total, lockFrom, currentEp, coinCost, onSelect }: { total: number; lockFrom: number; currentEp: number; coinCost: number; onSelect: (ep: number) => void }) {
+function EpisodeGrid({ total, isLocked, currentEp, coinCost, onSelect }: { total: number; isLocked: (ep: number) => boolean; currentEp: number; coinCost: number; onSelect: (ep: number) => void }) {
   const BATCH = 50
   const batches = Math.ceil(total / BATCH)
   const [batch, setBatch] = useState(0)
@@ -39,7 +39,7 @@ function EpisodeGrid({ total, lockFrom, currentEp, coinCost, onSelect }: { total
           Trailer
         </button>
         {eps.map(ep => {
-          const locked = ep >= lockFrom
+          const locked = isLocked(ep)
           const active = currentEp === ep
           return (
             <button key={ep} onClick={() => onSelect(ep)} className={`aspect-square rounded-lg text-xs font-bold flex items-center justify-center transition-all border relative ${active ? 'bg-brand-red border-brand-red text-white shadow-glow-red' : locked ? 'bg-brand-card border-brand-border text-brand-muted hover:border-brand-gold/40' : 'bg-green-500/5 border-green-500/20 text-brand-text hover:border-green-500/40'}`}>
@@ -55,14 +55,26 @@ function EpisodeGrid({ total, lockFrom, currentEp, coinCost, onSelect }: { total
 
 export default function SeriesDetailPage({ params }: { params: { slug: string } }) {
   const { data: series, isLoading, isError } = useSeriesDetail(params.slug)
+  const { data: recommended = [] } = useRecommended(series?.id ?? '')
+  const { data: access } = useSeriesAccess(series?.id)
+  const { data: savedIds = [] } = useSavedIds()
+  const toggleSave = useToggleSave()
+  const unlock = useUnlockEpisode()
+  const saveProgress = useSaveProgress()
 
-  // View-count increment needs a real backend endpoint — not wired yet.
-  const { data: catalog = [] } = useAllSeries()
   const [currentEp, setCurrentEp] = useState(1)
   const [liked, setLiked] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [showFull, setShowFull] = useState(false)
   const [paywallOpen, setPaywallOpen] = useState(false)
+
+  // Jump to where the user left off — once, when their access info arrives
+  const resumed = useRef(false)
+  useEffect(() => {
+    if (!resumed.current && access?.last_episode) {
+      resumed.current = true
+      setCurrentEp(access.last_episode)
+    }
+  }, [access?.last_episode])
 
   if (isError) {
     return (
@@ -80,11 +92,37 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
     )
   }
 
-  const isLocked = currentEp >= series.lock_from_episode && currentEp !== 0
+  const episodeByNumber = new Map(series.episodes.map(e => [e.episode_number, e]))
+  const unlockedIds = new Set(access?.unlocked_episode_ids ?? [])
+  const isEpisodeLocked = (n: number) => {
+    if (n === 0) return false // trailer
+    const ep = episodeByNumber.get(n)
+    if (!ep) return true
+    if (ep.access_type === 'FREE' || access?.is_vip) return false
+    return !unlockedIds.has(ep.id)
+  }
+  const currentEpisode = episodeByNumber.get(currentEp)
+  const isLocked = isEpisodeLocked(currentEp)
+  const saved = savedIds.includes(series.id)
 
   const handleEpSelect = (ep: number) => {
     setCurrentEp(ep)
-    if (ep >= series.lock_from_episode && ep !== 0) setPaywallOpen(true)
+    if (isEpisodeLocked(ep)) setPaywallOpen(true)
+  }
+
+  // No video player yet (Phase 3) — pressing play records that the episode
+  // was started so Continue Watching / resume work end to end. The player
+  // will report real positions through the same mutation.
+  const handlePlay = () => {
+    if (currentEpisode && !isLocked) saveProgress.mutate({ episodeId: currentEpisode.id, positionSeconds: 0 })
+  }
+
+  const handleUnlock = () => {
+    if (!currentEpisode) return
+    unlock.mutate(
+      { episodeId: currentEpisode.id, coinCost: currentEpisode.coin_price, seriesId: series.id },
+      { onSuccess: () => setPaywallOpen(false) },
+    )
   }
 
   return (
@@ -115,7 +153,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
 
               {!isLocked ? (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <button className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-all active:scale-90">
+                  <button onClick={handlePlay} className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-all active:scale-90">
                     <Play size={28} fill="white" className="text-white ml-1" />
                   </button>
                 </div>
@@ -127,7 +165,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
                   <p className="text-white font-bold text-lg mb-1 text-center">Episode {currentEp} Locked</p>
                   <p className="text-brand-subtle text-sm mb-5 text-center">Unlock to keep watching</p>
                   <div className="flex flex-col gap-2 w-full max-w-[220px]">
-                    <button onClick={() => setPaywallOpen(true)} className="btn-primary flex items-center justify-center gap-2">🪙 Use {series.coin_cost_per_episode} Coins</button>
+                    <button onClick={() => setPaywallOpen(true)} className="btn-primary flex items-center justify-center gap-2">🪙 Use {currentEpisode?.coin_price ?? series.coin_cost_per_episode} Coins</button>
                     <button onClick={() => setPaywallOpen(true)} className="btn-outline flex items-center justify-center gap-2">📺 Watch 2 Ads Free</button>
                   </div>
                 </div>
@@ -175,8 +213,8 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
             </div>
 
             {/* Primary CTA */}
-            <button onClick={() => handleEpSelect(1)} className="w-full btn-primary py-3 flex items-center justify-center gap-2 mb-4">
-              <Play size={16} fill="white" /> {currentEp > 1 ? `Resume Episode ${currentEp}` : 'Start Watching — Free'}
+            <button onClick={() => handleEpSelect(access?.last_episode ?? 1)} className="w-full btn-primary py-3 flex items-center justify-center gap-2 mb-4">
+              <Play size={16} fill="white" /> {access?.last_episode ? `Resume Episode ${access.last_episode}` : 'Start Watching — Free'}
             </button>
 
             <div className="border-t border-brand-border mb-4" />
@@ -187,7 +225,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
                 <span className={`text-xs font-semibold ${liked ? 'text-brand-red' : 'text-brand-subtle'}`}>39.5k</span>
               </button>
               <div className="w-px h-8 bg-brand-border" />
-              <button onClick={() => setSaved(!saved)} className="flex flex-col items-center gap-1.5 group active:scale-90 transition-transform">
+              <button onClick={() => toggleSave.mutate(series.id)} disabled={toggleSave.isPending} className="flex flex-col items-center gap-1.5 group active:scale-90 transition-transform">
                 {saved ? <Check size={22} className="text-brand-red" /> : <Bookmark size={22} className="text-brand-subtle group-hover:text-white" />}
                 <span className={`text-xs font-semibold ${saved ? 'text-brand-red' : 'text-brand-subtle'}`}>{saved ? 'Saved' : 'My List'}</span>
               </button>
@@ -201,7 +239,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
             <div className="border-t border-brand-border mb-5" />
 
             <h3 className="text-white font-bold text-sm mb-3">Episodes</h3>
-            <EpisodeGrid total={series.total_episodes} lockFrom={series.lock_from_episode} currentEp={currentEp} coinCost={series.coin_cost_per_episode} onSelect={handleEpSelect} />
+            <EpisodeGrid total={series.total_episodes} isLocked={isEpisodeLocked} currentEp={currentEp} coinCost={series.coin_cost_per_episode} onSelect={handleEpSelect} />
           </div>
         </div>
 
@@ -209,15 +247,18 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
           isOpen={paywallOpen}
           onClose={() => setPaywallOpen(false)}
           episodeNumber={currentEp}
-          coinCost={series.coin_cost_per_episode}
+          coinCost={currentEpisode?.coin_price ?? series.coin_cost_per_episode}
           seriesTitle={series.title}
+          vipOnly={currentEpisode?.access_type === 'VIP_ONLY'}
+          onUnlock={handleUnlock}
+          unlocking={unlock.isPending}
         />
 
         {/* RECOMMENDATIONS */}
         <div className="px-4 md:px-0 py-10">
           <h2 className="text-white font-bold text-lg mb-4">You May Also Like</h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
-            {catalog.filter(s => s.id !== series.id).slice(0, 6).map(s => (
+            {recommended.map(s => (
               <Link key={s.id} href={`/series/${s.slug}`} className="group">
                 <div className="aspect-[2/3] relative rounded-xl overflow-hidden mb-2 ring-1 ring-white/5">
                   <Image src={s.thumbnail_url} alt={s.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="200px" />

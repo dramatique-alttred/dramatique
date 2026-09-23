@@ -1,16 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useAllSeries } from '@/hooks'
+import { useSavedList, useContinueWatching } from '@/hooks'
 import SeriesCard from '@/components/series/SeriesCard'
 import EmptyState from '@/components/ui/EmptyState'
 import { BookMarked, Play } from 'lucide-react'
 
 export default function MyListPage() {
-  const { data: MOCK_SERIES = [] } = useAllSeries()
-  // Mock: first 3 series are saved
-  const [saved] = useState(MOCK_SERIES.slice(0, 3))
-  const [continueWatching] = useState(MOCK_SERIES.slice(0, 2).map((s, i) => ({ ...s, progress: i === 0 ? 65 : 30, lastEp: i === 0 ? 4 : 2 })))
+  const { data: saved = [] } = useSavedList()
+  const { data: continueWatching = [] } = useContinueWatching()
 
   return (
     <main className="min-h-screen bg-brand-black pt-20 pb-24 md:pb-12">
@@ -37,7 +34,7 @@ export default function MyListPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-bold text-sm truncate mb-1">{s.title}</p>
-                    <p className="text-brand-subtle text-xs mb-2">Episode {s.lastEp} · {s.genre}</p>
+                    <p className="text-brand-subtle text-xs mb-2">Episode {s.last_episode} · {s.genre}</p>
                     {/* PROGRESS BAR */}
                     <div className="w-full h-1 bg-brand-border rounded-full overflow-hidden">
                       <div className="h-full bg-brand-red rounded-full" style={{ width: `${s.progress}%` }} />

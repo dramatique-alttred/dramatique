@@ -14,7 +14,11 @@ interface User {
 interface AuthState {
   // State
   user: User | null
+  // A real (non-guest) account is signed in
   isLoggedIn: boolean
+  // Any Firebase session exists — including an anonymous guest — so
+  // per-user API calls (My List, progress, unlocks) can be made
+  sessionReady: boolean
   isVIP: boolean
   isLoading: boolean
 
@@ -23,6 +27,7 @@ interface AuthState {
   logout: () => void
   updateProfile: (updates: Partial<User>) => void
   setLoading: (loading: boolean) => void
+  setSessionReady: (ready: boolean) => void
   checkVIP: () => boolean
 }
 
@@ -33,6 +38,7 @@ export const useAuthStore = create<AuthState>()(
         // Initial state
         user: null,
         isLoggedIn: false,
+        sessionReady: false,
         isVIP: false,
         isLoading: false,
 
@@ -62,6 +68,10 @@ export const useAuthStore = create<AuthState>()(
 
         setLoading: (loading: boolean) => {
           set({ isLoading: loading }, false, 'auth/setLoading')
+        },
+
+        setSessionReady: (ready: boolean) => {
+          set({ sessionReady: ready }, false, 'auth/setSessionReady')
         },
 
         // Check if VIP is still active

@@ -1,14 +1,24 @@
 'use client'
 
-import { useAllSeries } from '@/hooks'
+import { useWatchHistory, useClearHistory } from '@/hooks'
 import EmptyState from '@/components/ui/EmptyState'
 import { History, Play, Trash2 } from 'lucide-react'
 
+function timeAgo(iso?: string): string {
+  if (!iso) return ''
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins} min ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+  const days = Math.floor(hours / 24)
+  return `${days} day${days > 1 ? 's' : ''} ago`
+}
+
 export default function HistoryPage() {
-  const { data: catalog = [] } = useAllSeries()
-  const HISTORY = catalog.slice(0, 5).map((s, i) => ({
-    ...s, watchedEp: i + 1, watchedAt: `${i + 1} day${i > 0 ? 's' : ''} ago`, progress: 20 + i * 15,
-  }))
+  const { data: history = [] } = useWatchHistory()
+  const clearHistory = useClearHistory()
+  const HISTORY = history.map(s => ({ ...s, watchedEp: s.last_episode, watchedAt: timeAgo(s.watched_at) }))
   return (
     <main className="min-h-screen bg-brand-black pt-20 pb-24 md:pb-12">
       <div className="max-w-[1400px] mx-auto px-5 md:px-8">
@@ -18,7 +28,7 @@ export default function HistoryPage() {
             <History size={24} className="text-brand-red" />
             <h1 className="text-white font-bold text-3xl">Watch History</h1>
           </div>
-          <button className="flex items-center gap-2 text-brand-subtle hover:text-white text-xs border border-brand-border hover:border-brand-muted px-3 py-2 rounded-lg transition-colors">
+          <button onClick={() => { if (window.confirm('Clear your entire watch history?')) clearHistory.mutate() }} disabled={!HISTORY.length || clearHistory.isPending} className="disabled:opacity-40 flex items-center gap-2 text-brand-subtle hover:text-white text-xs border border-brand-border hover:border-brand-muted px-3 py-2 rounded-lg transition-colors">
             <Trash2 size={13} /> Clear All
           </button>
         </div>

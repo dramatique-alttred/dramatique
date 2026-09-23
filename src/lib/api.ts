@@ -4,35 +4,14 @@
  * Single source of truth for all consumer data calls. Every export keeps the
  * name/signature/shape the pages and hooks already call.
  *
- * - seriesApi (catalog): LIVE — Express /api/v1/catalog backed by Supabase.
- * - userApi / coinApi: still in-memory mocks until the authenticated user
- *   endpoints land (My List, progress, unlocks, daily reward).
+ * - seriesApi: public catalog (/catalog) + per-user continue watching
+ * - userApi / coinApi: per-user endpoints (/me, /coins), authenticated with
+ *   the Firebase ID token by apiClient
+ * - paymentApi / adApi: not connected yet (Phase 4)
  */
 
-import { MOCK_SERIES, MOCK_CONTINUE } from './mock-data'
-import { firebaseAuth } from './firebase'
 import { apiClient } from './apiClient'
-import { Series, SeriesDetail, FeedSection, GenreCategory } from '@/types'
-
-const wait = (ms = 200) => new Promise(r => setTimeout(r, ms))
-
-function requireUserId(): string {
-  const uid = firebaseAuth?.currentUser?.uid
-  if (!uid) throw new Error('Not signed in')
-  return uid
-}
-
-// Per-user mock state, keyed by Firebase uid — resets on page reload since
-// there's no persistence layer until the real backend is wired in.
-const savedSeriesByUser = new Map<string, Set<string>>()
-const unlockedEpisodesByUser = new Map<string, Set<string>>()
-const coinBalanceByUser = new Map<string, number>()
-const coinTxByUser = new Map<string, { id: string; type: string; desc: string; coins: number; date: string; status: string }[]>()
-
-function getBalanceRef(uid: string): number {
-  if (!coinBalanceByUser.has(uid)) coinBalanceByUser.set(uid, 50) // starter balance
-  return coinBalanceByUser.get(uid)!
-}
+import { Series, SeriesDetail, FeedSection, GenreCategory, WatchedSeries, SeriesAccess, DailyRewardStatus, CoinTransaction } from '@/types'
 
 // ── SERIES ──────────────────────────────────────────────
 const qs = (params: Record<string, string | number | undefined>) => {
@@ -47,12 +26,7 @@ export const seriesApi = {
 
   getHero: (): Promise<Series[]> => apiClient.get('/catalog/hero'),
 
-  // Still mock — needs the authenticated watch-progress endpoint
-  getContinueWatching: async (): Promise<Series[]> => {
-    await wait()
-    if (!firebaseAuth?.currentUser) return []
-    return MOCK_CONTINUE
-  },
+  getContinueWatching: (): Promise<WatchedSeries[]> => apiClient.get('/me/continue-watching'),
 
   getAll: (): Promise<Series[]> => apiClient.get('/catalog/series'),
 
@@ -70,94 +44,40 @@ export const seriesApi = {
 }
 
 // ── USER ──────────────────────────────────────────────
+// Works for guests too (anonymous Firebase session) — see AuthProvider
 export const userApi = {
-  getProfile: async () => {
-    const uid = requireUserId()
-    const user = firebaseAuth!.currentUser!
-    return { id: uid, display_name: user.displayName, email: user.email, phone: user.phoneNumber, avatar_url: user.photoURL, coins: getBalanceRef(uid) }
-  },
+  getSavedList: (): Promise<Series[]> => apiClient.get('/me/list'),
 
-  getSavedList: async (): Promise<Series[]> => {
-    await wait()
-    const uid = requireUserId()
-    const saved = savedSeriesByUser.get(uid) || new Set()
-    return MOCK_SERIES.filter(s => saved.has(s.id))
-  },
+  getSavedIds: (): Promise<string[]> => apiClient.get('/me/list/ids'),
 
-  getWatchHistory: async () => {
-    await wait()
-    requireUserId()
-    return MOCK_CONTINUE.map(s => ({ ...s, watchedEp: s.last_episode, watchedAt: 'Today', progress: s.progress }))
-  },
+  getWatchHistory: (): Promise<WatchedSeries[]> => apiClient.get('/me/history'),
 
-  toggleSave: async (seriesId: string): Promise<{ saved: boolean }> => {
-    await wait()
-    const uid = requireUserId()
-    const saved = savedSeriesByUser.get(uid) || new Set<string>()
-    const nowSaved = !saved.has(seriesId)
-    if (nowSaved) saved.add(seriesId); else saved.delete(seriesId)
-    savedSeriesByUser.set(uid, saved)
-    return { saved: nowSaved }
-  },
+  clearWatchHistory: (): Promise<void> => apiClient.delete('/me/history'),
 
-  isSaved: async (seriesId: string): Promise<boolean> => {
-    const uid = firebaseAuth?.currentUser?.uid
-    if (!uid) return false
-    return (savedSeriesByUser.get(uid) || new Set()).has(seriesId)
-  },
+  toggleSave: (seriesId: string): Promise<{ saved: boolean }> =>
+    apiClient.post(`/me/list/${encodeURIComponent(seriesId)}/toggle`),
 
-  // Real write needs a live video player + backend — plumbing is ready for
-  // whenever that lands (see backend /api/v1/playback/progress).
-  saveProgress: async (_seriesId: string, _episodeId: string, _episodeNumber: number, _progressPercent: number): Promise<void> => {
-    requireUserId()
-  },
+  saveProgress: (episodeId: string, positionSeconds: number, completed?: boolean): Promise<{ saved: boolean }> =>
+    apiClient.put('/me/progress', { episodeId, positionSeconds, completed }),
 
-  claimDailyReward: async (): Promise<{ coins: number; streak: number }> => {
-    await wait()
-    const uid = requireUserId()
-    const reward = 5
-    coinBalanceByUser.set(uid, getBalanceRef(uid) + reward)
-    return { coins: reward, streak: 1 }
-  },
+  getSeriesAccess: (seriesId: string): Promise<SeriesAccess> =>
+    apiClient.get(`/me/series/${encodeURIComponent(seriesId)}/access`),
+
+  getDailyReward: (): Promise<DailyRewardStatus> => apiClient.get('/coins/daily-reward'),
+
+  claimDailyReward: (): Promise<{ coins: number; streak: number; balance: number }> =>
+    apiClient.post('/coins/daily-reward'),
 }
 
 // ── COINS ──────────────────────────────────────────────
 export const coinApi = {
-  getBalance: async (): Promise<number> => {
-    await wait()
-    const uid = requireUserId()
-    return getBalanceRef(uid)
-  },
+  getBalance: async (): Promise<number> => (await apiClient.get<{ balance: number }>('/coins/balance')).balance,
 
-  getTransactions: async () => {
-    await wait()
-    const uid = requireUserId()
-    return coinTxByUser.get(uid) || []
-  },
+  getTransactions: (): Promise<CoinTransaction[]> => apiClient.get('/coins/transactions'),
 
-  unlockEpisode: async (episodeId: string): Promise<{ success: boolean; newBalance?: number }> => {
-    await wait()
-    const uid = requireUserId()
-    const unlocked = unlockedEpisodesByUser.get(uid) || new Set<string>()
-    unlocked.add(episodeId)
-    unlockedEpisodesByUser.set(uid, unlocked)
-
-    const cost = 5
-    const newBalance = Math.max(0, getBalanceRef(uid) - cost)
-    coinBalanceByUser.set(uid, newBalance)
-
-    const tx = coinTxByUser.get(uid) || []
-    tx.unshift({ id: `tx-${Date.now()}`, type: 'EPISODE_UNLOCK', desc: `Unlocked episode`, coins: -cost, date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }), status: 'success' })
-    coinTxByUser.set(uid, tx)
-
-    return { success: true, newBalance }
-  },
-
-  checkUnlocked: async (episodeId: string): Promise<boolean> => {
-    const uid = firebaseAuth?.currentUser?.uid
-    if (!uid) return false
-    return (unlockedEpisodesByUser.get(uid) || new Set()).has(episodeId)
-  },
+  // Server is authoritative: checks access, debits and records atomically
+  unlockEpisode: (episodeId: string): Promise<{ unlocked: boolean; charged: number; balance: number }> =>
+    apiClient.post('/coins/unlock', { episodeId }),
 }
 
 // ── PAYMENTS ──────────────────────────────────────────────
@@ -179,8 +99,5 @@ export const adApi = {
   recordAdWatch: async (_episodeId: string, _adNumber: number): Promise<{ adsWatched: number; unlocked: boolean }> => {
     throw new Error('Ad network is not connected yet — needs AdMob (or similar) setup.')
   },
-  getDailyAdLimit: async (): Promise<{ used: number; limit: number }> => {
-    await wait()
-    return { used: 0, limit: 3 }
-  },
+  getDailyAdLimit: async (): Promise<{ used: number; limit: number }> => ({ used: 0, limit: 3 }),
 }

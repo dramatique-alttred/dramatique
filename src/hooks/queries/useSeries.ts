@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { seriesApi } from '@/lib/api'
+import { useAuthStore } from '@/store'
 
 // Query keys — centralised to avoid typos and enable precise invalidation
 export const seriesKeys = {
@@ -35,6 +36,7 @@ export function useContinueWatching() {
   return useQuery({
     queryKey: [...seriesKeys.all, 'continue'],
     queryFn: seriesApi.getContinueWatching,
+    enabled: useAuthStore(s => s.sessionReady), // per-user; guests included
     staleTime: 60 * 1000,
   })
 }

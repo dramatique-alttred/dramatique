@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Lock, Coins, Play, Crown, ChevronRight } from 'lucide-react'
+import { X, Lock, Coins, Play, Crown, ChevronRight, Loader2 } from 'lucide-react'
+import { useCoinStore } from '@/store'
 
 interface PaywallModalProps {
   isOpen: boolean
@@ -9,6 +10,9 @@ interface PaywallModalProps {
   episodeNumber: number
   coinCost?: number
   seriesTitle?: string
+  vipOnly?: boolean       // episode can't be bought with coins/ads
+  onUnlock?: () => void   // spend coins — server does the real debit
+  unlocking?: boolean
 }
 
 const COIN_PACKS = [
@@ -20,11 +24,11 @@ const COIN_PACKS = [
 
 type View = 'main' | 'coins' | 'vip' | 'ads'
 
-export default function PaywallModal({ isOpen, onClose, episodeNumber, coinCost = 5, seriesTitle = 'this series' }: PaywallModalProps) {
+export default function PaywallModal({ isOpen, onClose, episodeNumber, coinCost = 5, seriesTitle = 'this series', vipOnly = false, onUnlock, unlocking = false }: PaywallModalProps) {
   const [view, setView] = useState<View>('main')
   const [adStep, setAdStep] = useState(0)
   const [adWatching, setAdWatching] = useState(false)
-  const [userCoins] = useState(2)
+  const userCoins = useCoinStore(s => s.balance)
 
   if (!isOpen) return null
 
@@ -204,10 +208,14 @@ export default function PaywallModal({ isOpen, onClose, episodeNumber, coinCost 
         {/* OPTIONS */}
         <div className="p-5 flex flex-col gap-3">
 
+          {vipOnly ? (
+            <p className="text-brand-subtle text-sm text-center">This episode is exclusive to VIP members.</p>
+          ) : <>
+
           {/* OPTION 1: USE COINS */}
           {userCoins >= coinCost ? (
-            <button onClick={onClose} className="w-full bg-brand-red hover:bg-brand-redHover text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
-              🪙 Use {coinCost} Coins — Unlock Now
+            <button onClick={onUnlock} disabled={unlocking} className="w-full bg-brand-red hover:bg-brand-redHover disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+              {unlocking ? <><Loader2 size={16} className="animate-spin" /> Unlocking…</> : <>🪙 Use {coinCost} Coins — Unlock Now</>}
             </button>
           ) : (
             <button onClick={() => setView('coins')} className="w-full bg-brand-red hover:bg-brand-redHover text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
@@ -234,6 +242,7 @@ export default function PaywallModal({ isOpen, onClose, episodeNumber, coinCost 
             <span className="text-brand-subtle text-xs font-medium">or</span>
             <div className="flex-1 h-px bg-brand-border" />
           </div>
+          </>}
 
           {/* OPTION 3: VIP */}
           <button onClick={() => setView('vip')} className="w-full border border-yellow-400/40 hover:border-yellow-400 bg-yellow-400/5 hover:bg-yellow-400/10 text-yellow-400 font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
