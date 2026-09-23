@@ -8,6 +8,15 @@ import { useAdminCategories, useAdminSubcategories } from '@/hooks/admin/useAdmi
 import { adminSeriesApi } from '@/lib/admin-api'
 import { Save, Loader2 } from 'lucide-react'
 
+// <input type="datetime-local"> works in local time without a timezone;
+// the API wants ISO. Convert both ways.
+const toLocalInput = (iso?: string | null) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+}
+const toIso = (local: string) => (local ? new Date(local).toISOString() : null)
+
 export default function AddSeriesPage() {
   const router = useRouter()
   const { data: categories = [] } = useAdminCategories()
@@ -17,7 +26,7 @@ export default function AddSeriesPage() {
     thumbnail_url: '', hero_url: '', lock_from_episode: 3,
     coin_cost_per_episode: 5, primary_category: '',
     subcategories: [] as string[], tags: '',
-    is_featured: false, status: 'draft',
+    is_featured: false, status: 'draft', publish_at: '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -40,10 +49,14 @@ export default function AddSeriesPage() {
       setError('Title, slug, and primary category are required.')
       return
     }
+    if (form.status === 'scheduled' && !form.publish_at) {
+      setError('Pick a publish date and time to schedule this series.')
+      return
+    }
     setSaving(true)
     setError('')
     try {
-      const created = await adminSeriesApi.create(form)
+      const created = await adminSeriesApi.create({ ...form, publish_at: toIso(form.publish_at) })
       router.push(`/admin/series/${created.id}/episodes`)
     } catch (err: any) {
       setError(err.message || 'Could not save series. Try again.')
@@ -97,10 +110,16 @@ export default function AddSeriesPage() {
                 <FormField label="Status" required>
                   <Select value={form.status} onChange={e => set('status', e.target.value)}>
                     <option value="draft">Draft</option>
+                    <option value="scheduled">Scheduled</option>
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
                   </Select>
                 </FormField>
+                {form.status === 'scheduled' && (
+                  <FormField label="Publish at" required hint="Goes live automatically at this time">
+                    <Input type="datetime-local" value={form.publish_at} onChange={e => set('publish_at', e.target.value)} />
+                  </FormField>
+                )}
               </div>
             </div>
           </AdminCard>

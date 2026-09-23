@@ -9,6 +9,15 @@ import { useAdminCategories, useAdminSubcategories, useAdminSeriesOne, adminKeys
 import { adminSeriesApi } from '@/lib/admin-api'
 import { Save, Play, Trash2, Loader2 } from 'lucide-react'
 
+// <input type="datetime-local"> works in local time without a timezone;
+// the API wants ISO. Convert both ways.
+const toLocalInput = (iso?: string | null) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+}
+const toIso = (local: string) => (local ? new Date(local).toISOString() : null)
+
 export default function EditSeriesPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const qc = useQueryClient()
@@ -35,6 +44,9 @@ export default function EditSeriesPage({ params }: { params: { id: string } }) {
         tags: existing.tags || '',
         is_featured: existing.is_featured,
         status: existing.status,
+        publish_at: toLocalInput(existing.publish_at),
+        thumbnail_url: existing.thumbnail_url || '',
+        hero_url: existing.hero_url || '',
       })
     }
   }, [existing, form])
@@ -56,10 +68,14 @@ export default function EditSeriesPage({ params }: { params: { id: string } }) {
   const toggleSub = (name: string) => set('subcategories', form.subcategories.includes(name) ? form.subcategories.filter((s: string) => s !== name) : [...form.subcategories, name])
 
   const handleSave = async () => {
+    if (form.status === 'scheduled' && !form.publish_at) {
+      setError('Pick a publish date and time to schedule this series.')
+      return
+    }
     setSaving(true)
     setError('')
     try {
-      await adminSeriesApi.update(params.id, form)
+      await adminSeriesApi.update(params.id, { ...form, publish_at: toIso(form.publish_at) })
       qc.invalidateQueries({ queryKey: adminKeys.seriesOne(params.id) })
       qc.invalidateQueries({ queryKey: ['admin', 'series'] })
       router.push('/admin/series')
@@ -121,10 +137,16 @@ export default function EditSeriesPage({ params }: { params: { id: string } }) {
                 <FormField label="Status" required>
                   <Select value={form.status} onChange={e => set('status', e.target.value)}>
                     <option value="draft">Draft</option>
+                    <option value="scheduled">Scheduled</option>
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
                   </Select>
                 </FormField>
+                {form.status === 'scheduled' && (
+                  <FormField label="Publish at" required hint="Goes live automatically at this time">
+                    <Input type="datetime-local" value={form.publish_at} onChange={e => set('publish_at', e.target.value)} />
+                  </FormField>
+                )}
               </div>
             </div>
           </AdminCard>
@@ -149,6 +171,18 @@ export default function EditSeriesPage({ params }: { params: { id: string } }) {
                   </div>
                 </FormField>
               )}
+            </div>
+          </AdminCard>
+
+          <AdminCard>
+            <h3 className="text-white font-bold text-sm mb-4">Images</h3>
+            <div className="space-y-4">
+              <FormField label="Thumbnail URL" hint="Portrait 2:3 ratio — used in series cards">
+                <Input value={form.thumbnail_url} onChange={e => set('thumbnail_url', e.target.value)} placeholder="https://..." />
+              </FormField>
+              <FormField label="Hero Image URL" hint="Landscape 16:9 — used in hero banner">
+                <Input value={form.hero_url} onChange={e => set('hero_url', e.target.value)} placeholder="https://..." />
+              </FormField>
             </div>
           </AdminCard>
         </div>
