@@ -11,6 +11,24 @@ export interface Series {
   progress?: number;         // 0-100 percentage watched of current episode
   last_episode?: number;     // episode the user last watched
 }
+export interface Episode {
+  id: string;
+  episode_number: number;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  duration_seconds: number;
+  access_type: 'FREE' | 'COIN_LOCKED' | 'VIP_ONLY';
+  coin_price: number;
+}
+// Series detail endpoint also returns the live episode list
+export interface SeriesDetail extends Series {
+  episodes: Episode[];
+}
+export interface GenreCategory {
+  id: number; name: string; slug: string; icon: string | null; color: string | null;
+  genres: { id: number; name: string; slug: string; icon: string | null }[];
+}
 export interface FeedSection {
   id: string;
   title: string;

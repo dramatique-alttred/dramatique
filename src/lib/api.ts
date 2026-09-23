@@ -1,16 +1,18 @@
 /**
- * API Layer — Dramatiqué (consumer-facing)
+ * API Layer — Dramatique (consumer-facing)
  *
- * Single source of truth for all consumer data calls. Runs on the bundled
- * mock catalog for now — there's no live backend/MySQL to query yet (see
- * /backend). Every export here keeps the same name/signature/shape the
- * pages and hooks already call, so swapping these bodies for real
- * `apiClient` calls to Express later needs zero page changes.
+ * Single source of truth for all consumer data calls. Every export keeps the
+ * name/signature/shape the pages and hooks already call.
+ *
+ * - seriesApi (catalog): LIVE — Express /api/v1/catalog backed by Supabase.
+ * - userApi / coinApi: still in-memory mocks until the authenticated user
+ *   endpoints land (My List, progress, unlocks, daily reward).
  */
 
-import { MOCK_SERIES, MOCK_FEED, HERO_SERIES, MOCK_CONTINUE } from './mock-data'
+import { MOCK_SERIES, MOCK_CONTINUE } from './mock-data'
 import { firebaseAuth } from './firebase'
-import { Series, FeedSection } from '@/types'
+import { apiClient } from './apiClient'
+import { Series, SeriesDetail, FeedSection, GenreCategory } from '@/types'
 
 const wait = (ms = 200) => new Promise(r => setTimeout(r, ms))
 
@@ -33,52 +35,38 @@ function getBalanceRef(uid: string): number {
 }
 
 // ── SERIES ──────────────────────────────────────────────
+const qs = (params: Record<string, string | number | undefined>) => {
+  const p = new URLSearchParams()
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') p.set(k, String(v))
+  const s = p.toString()
+  return s ? `?${s}` : ''
+}
+
 export const seriesApi = {
-  getFeed: async (): Promise<FeedSection[]> => {
-    await wait()
-    return MOCK_FEED
-  },
+  getFeed: (): Promise<FeedSection[]> => apiClient.get('/catalog/feed'),
 
-  getHero: async (): Promise<Series[]> => {
-    await wait()
-    return HERO_SERIES
-  },
+  getHero: (): Promise<Series[]> => apiClient.get('/catalog/hero'),
 
+  // Still mock — needs the authenticated watch-progress endpoint
   getContinueWatching: async (): Promise<Series[]> => {
     await wait()
     if (!firebaseAuth?.currentUser) return []
     return MOCK_CONTINUE
   },
 
-  getAll: async (): Promise<Series[]> => {
-    await wait()
-    return MOCK_SERIES
-  },
+  getAll: (): Promise<Series[]> => apiClient.get('/catalog/series'),
 
-  getBySlug: async (slug: string): Promise<Series> => {
-    await wait()
-    const series = MOCK_SERIES.find(s => s.slug === slug)
-    if (!series) throw new Error(`Series not found: ${slug}`)
-    return series
-  },
+  getBySlug: (slug: string): Promise<SeriesDetail> => apiClient.get(`/catalog/series/${encodeURIComponent(slug)}`),
 
-  search: async (query: string): Promise<Series[]> => {
-    await wait()
-    if (!query.trim()) return MOCK_SERIES
-    const q = query.toLowerCase()
-    return MOCK_SERIES.filter(s => s.title.toLowerCase().includes(q) || s.synopsis.toLowerCase().includes(q))
-  },
+  search: (query: string): Promise<Series[]> => apiClient.get(`/catalog/series${qs({ q: query.trim() })}`),
 
-  getByGenre: async (genre: string): Promise<Series[]> => {
-    await wait()
-    if (genre === 'All') return MOCK_SERIES
-    return MOCK_SERIES.filter(s => s.genre === genre)
-  },
+  getByGenre: (genre: string): Promise<Series[]> =>
+    apiClient.get(`/catalog/series${qs({ genre: genre === 'All' ? undefined : genre })}`),
 
-  getRecommended: async (excludeId: string): Promise<Series[]> => {
-    await wait()
-    return MOCK_SERIES.filter(s => s.id !== excludeId).slice(0, 6)
-  },
+  getRecommended: (excludeId: string): Promise<Series[]> =>
+    apiClient.get(`/catalog/series/${encodeURIComponent(excludeId)}/recommended`),
+
+  getGenres: (): Promise<GenreCategory[]> => apiClient.get('/catalog/genres'),
 }
 
 // ── USER ──────────────────────────────────────────────

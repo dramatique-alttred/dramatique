@@ -2,6 +2,13 @@ import { firebaseAuth } from './firebase'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
 
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
 async function authHeader(): Promise<Record<string, string>> {
   const token = await firebaseAuth?.currentUser?.getIdToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -18,7 +25,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body.error || `Request failed: ${res.status} ${res.statusText}`)
+    throw new ApiError(res.status, body.error || `Request failed: ${res.status} ${res.statusText}`)
   }
   if (res.status === 204) return undefined as T
   return res.json()

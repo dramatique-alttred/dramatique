@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import PaywallModal from '@/components/monetisation/PaywallModal'
+import EmptyState from '@/components/ui/EmptyState'
 import { useSeriesDetail, useAllSeries } from '@/hooks'
 import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star } from 'lucide-react'
 
@@ -53,7 +54,7 @@ function EpisodeGrid({ total, lockFrom, currentEp, coinCost, onSelect }: { total
 }
 
 export default function SeriesDetailPage({ params }: { params: { slug: string } }) {
-  const { data: series, isLoading } = useSeriesDetail(params.slug)
+  const { data: series, isLoading, isError } = useSeriesDetail(params.slug)
 
   // View-count increment needs a real backend endpoint — not wired yet.
   const { data: catalog = [] } = useAllSeries()
@@ -62,6 +63,14 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const [saved, setSaved] = useState(false)
   const [showFull, setShowFull] = useState(false)
   const [paywallOpen, setPaywallOpen] = useState(false)
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-brand-black pt-16">
+        <EmptyState icon="🎬" title="Series not found" description="This drama doesn't exist or isn't available yet." actionLabel="Browse Series" actionHref="/categories" />
+      </div>
+    )
+  }
 
   if (isLoading || !series) {
     return (
