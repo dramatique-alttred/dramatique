@@ -1,5 +1,5 @@
 import { Response } from 'express'
-import { AuthedRequest } from '../../middleware/auth.middleware'
+import { AuthedRequest, isVipActive } from '../../middleware/auth.middleware'
 import { prisma } from '../../config/prisma'
 
 /**
@@ -9,19 +9,23 @@ import { prisma } from '../../config/prisma'
  * frontend can hydrate its auth store right after login.
  */
 export async function verifyFirebase(req: AuthedRequest, res: Response) {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.update({
     where: { id: req.user!.id },
+    data: { lastLoginAt: new Date() },
     include: { wallet: true },
   })
-  if (!user) return res.status(404).json({ error: 'User not found' })
 
   res.json({
     id: user.id,
     email: user.email,
     phone: user.phone,
+    displayName: user.displayName,
+    avatarUrl: user.avatarUrl,
     role: user.role,
-    isVip: user.isVip,
-    vipExpiresAt: user.vipExpiresAt,
+    isGuest: user.isGuest,
+    isVip: isVipActive(user.vipUntil),
+    vipExpiresAt: user.vipUntil,
+    referralCode: user.referralCode,
     coins: user.wallet?.balance ?? 0,
   })
 }

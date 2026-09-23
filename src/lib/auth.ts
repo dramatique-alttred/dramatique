@@ -75,9 +75,13 @@ export interface Profile {
   id: string
   email: string | null
   phone: string | null
+  displayName: string | null
+  avatarUrl: string | null
   role: 'USER' | 'ADMIN'
+  isGuest: boolean
   isVip: boolean
   vipExpiresAt: string | null
+  referralCode: string
   coins: number
 }
 
