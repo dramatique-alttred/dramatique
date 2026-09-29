@@ -5,6 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import EmptyState from '@/components/ui/EmptyState'
+import VideoPlayer from '@/components/player/VideoPlayer'
+import { playbackApi, PlaybackInfo } from '@/lib/api'
+import { ApiError } from '@/lib/apiClient'
 import { useSeriesDetail, useRecommended, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star } from 'lucide-react'
 
@@ -66,6 +69,9 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const [liked, setLiked] = useState(false)
   const [showFull, setShowFull] = useState(false)
   const [paywallOpen, setPaywallOpen] = useState(false)
+  const [playback, setPlayback] = useState<PlaybackInfo | null>(null)
+  const [notice, setNotice] = useState('')
+  const [starting, setStarting] = useState(false)
 
   // Jump to where the user left off — once, when their access info arrives
   const resumed = useRef(false)
@@ -105,25 +111,55 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const isLocked = isEpisodeLocked(currentEp)
   const saved = savedIds.includes(series.id)
 
-  const handleEpSelect = (ep: number) => {
-    setCurrentEp(ep)
-    if (isEpisodeLocked(ep)) setPaywallOpen(true)
+  // Ask the server for a stream URL — it decides access, not the UI
+  const startPlayback = async (episodeId: string) => {
+    setNotice('')
+    setStarting(true)
+    try {
+      setPlayback(await playbackApi.get(episodeId))
+    } catch (err) {
+      setPlayback(null)
+      if (err instanceof ApiError && err.status === 402) setPaywallOpen(true)
+      else if (err instanceof ApiError && err.code === 'VIDEO_NOT_READY') setNotice('This episode is coming soon')
+      else setNotice('Could not start playback. Try again.')
+    } finally {
+      setStarting(false)
+    }
   }
 
-  // No video player yet (Phase 3) — pressing play records that the episode
-  // was started so Continue Watching / resume work end to end. The player
-  // will report real positions through the same mutation.
+  const handleEpSelect = (ep: number) => {
+    setCurrentEp(ep)
+    setPlayback(null)
+    setNotice('')
+    const episode = episodeByNumber.get(ep)
+    if (isEpisodeLocked(ep)) setPaywallOpen(true)
+    else if (episode) startPlayback(episode.id)
+  }
+
   const handlePlay = () => {
-    if (currentEpisode && !isLocked) saveProgress.mutate({ episodeId: currentEpisode.id, positionSeconds: 0 })
+    if (!currentEpisode) return
+    if (isLocked) setPaywallOpen(true)
+    else startPlayback(currentEpisode.id)
   }
 
   const handleUnlock = () => {
     if (!currentEpisode) return
+    const episodeId = currentEpisode.id
     unlock.mutate(
-      { episodeId: currentEpisode.id, coinCost: currentEpisode.coin_price, seriesId: series.id },
-      { onSuccess: () => setPaywallOpen(false) },
+      { episodeId, coinCost: currentEpisode.coin_price, seriesId: series.id },
+      // Unlocked → straight into the episode
+      { onSuccess: () => { setPaywallOpen(false); startPlayback(episodeId) } },
     )
   }
+
+  // The binge loop: episode ends → mark it watched → next episode plays,
+  // or the paywall appears if it's locked (the cliffhanger moment)
+  const handleEnded = (duration: number) => {
+    if (currentEpisode) saveProgress.mutate({ episodeId: currentEpisode.id, positionSeconds: duration, completed: true })
+    if (episodeByNumber.has(currentEp + 1)) handleEpSelect(currentEp + 1)
+  }
+
+  const isPlaying = !!playback && playback.episode_id === currentEpisode?.id
 
   return (
     <div className="min-h-screen bg-brand-black pt-16">
@@ -148,27 +184,41 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
             </div>
 
             <div className="relative bg-black md:rounded-2xl md:overflow-hidden" style={{ aspectRatio: '9/16', maxHeight: '85vh' }}>
-              <Image src={series.thumbnail_url} alt={series.title} fill className="object-cover" priority />
-              <div className="absolute inset-0 bg-black/25" />
-
-              {!isLocked ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <button onClick={handlePlay} className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-all active:scale-90">
-                    <Play size={28} fill="white" className="text-white ml-1" />
-                  </button>
-                </div>
+              {isPlaying ? (
+                <VideoPlayer
+                  key={playback.episode_id}
+                  src={playback.url}
+                  poster={series.thumbnail_url}
+                  startAt={playback.resume_position_seconds}
+                  onProgress={pos => saveProgress.mutate({ episodeId: playback.episode_id, positionSeconds: pos })}
+                  onEnded={handleEnded}
+                />
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 backdrop-blur-md px-6">
-                  <div className="w-14 h-14 rounded-full bg-brand-gold/15 flex items-center justify-center mb-3">
-                    <Lock size={26} className="text-brand-gold" />
-                  </div>
-                  <p className="text-white font-bold text-lg mb-1 text-center">Episode {currentEp} Locked</p>
-                  <p className="text-brand-subtle text-sm mb-5 text-center">Unlock to keep watching</p>
-                  <div className="flex flex-col gap-2 w-full max-w-[220px]">
-                    <button onClick={() => setPaywallOpen(true)} className="btn-primary flex items-center justify-center gap-2">🪙 Use {currentEpisode?.coin_price ?? series.coin_cost_per_episode} Coins</button>
-                    <button onClick={() => setPaywallOpen(true)} className="btn-outline flex items-center justify-center gap-2">📺 Watch 2 Ads Free</button>
-                  </div>
-                </div>
+                <>
+                  <Image src={series.thumbnail_url} alt={series.title} fill className="object-cover" priority />
+                  <div className="absolute inset-0 bg-black/25" />
+
+                  {!isLocked ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                      <button onClick={handlePlay} disabled={starting} aria-label={`Play episode ${currentEp}`} className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-all active:scale-90 disabled:opacity-60">
+                        {starting ? <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Play size={28} fill="white" className="text-white ml-1" />}
+                      </button>
+                      {notice && <p className="text-white text-sm font-semibold bg-black/60 px-3 py-1.5 rounded-full">{notice}</p>}
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 backdrop-blur-md px-6">
+                      <div className="w-14 h-14 rounded-full bg-brand-gold/15 flex items-center justify-center mb-3">
+                        <Lock size={26} className="text-brand-gold" />
+                      </div>
+                      <p className="text-white font-bold text-lg mb-1 text-center">Episode {currentEp} Locked</p>
+                      <p className="text-brand-subtle text-sm mb-5 text-center">Unlock to keep watching</p>
+                      <div className="flex flex-col gap-2 w-full max-w-[220px]">
+                        <button onClick={() => setPaywallOpen(true)} className="btn-primary flex items-center justify-center gap-2">🪙 Use {currentEpisode?.coin_price ?? series.coin_cost_per_episode} Coins</button>
+                        <button onClick={() => setPaywallOpen(true)} className="btn-outline flex items-center justify-center gap-2">📺 Watch 2 Ads Free</button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="absolute top-3 right-3 bg-black/60 backdrop-blur text-white text-xs font-bold px-2.5 py-1 rounded-full">

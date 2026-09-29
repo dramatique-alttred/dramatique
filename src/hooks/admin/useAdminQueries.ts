@@ -44,11 +44,24 @@ export function useSetSeriesStatus() {
 }
 
 // ── EPISODES ──────────────────────────────────────
+// Poll while a video is uploading/transcoding so status and % update live
+const VIDEO_BUSY = ['uploaded', 'processing']
+
 export function useAdminEpisodes(seriesId: string) {
-  return useQuery({ queryKey: adminKeys.episodes(seriesId), queryFn: () => adminEpisodeApi.listBySeries(seriesId), enabled: !!seriesId })
+  return useQuery({
+    queryKey: adminKeys.episodes(seriesId),
+    queryFn: () => adminEpisodeApi.listBySeries(seriesId),
+    enabled: !!seriesId,
+    refetchInterval: q => ((q.state.data as any[] | undefined)?.some(e => VIDEO_BUSY.includes(e.status)) ? 3000 : false),
+  })
 }
 export function useAdminEpisodeOne(id: string) {
-  return useQuery({ queryKey: ['admin', 'episode', id], queryFn: () => adminEpisodeApi.getById(id), enabled: !!id })
+  return useQuery({
+    queryKey: ['admin', 'episode', id],
+    queryFn: () => adminEpisodeApi.getById(id),
+    enabled: !!id,
+    refetchInterval: q => (VIDEO_BUSY.includes((q.state.data as any)?.status) ? 2000 : false),
+  })
 }
 
 // ── USERS ──────────────────────────────────────

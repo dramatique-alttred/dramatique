@@ -80,6 +80,19 @@ export const coinApi = {
     apiClient.post('/coins/unlock', { episodeId }),
 }
 
+// ── PLAYBACK ──────────────────────────────────────────────
+// Server decides access: throws ApiError 402 (code LOCKED / VIP_REQUIRED)
+// or 409 (VIDEO_NOT_READY) instead of returning a URL
+export interface PlaybackInfo {
+  episode_id: string
+  url: string
+  duration_seconds: number
+  resume_position_seconds: number
+}
+export const playbackApi = {
+  get: (episodeId: string): Promise<PlaybackInfo> => apiClient.get(`/playback/${encodeURIComponent(episodeId)}`),
+}
+
 // ── PAYMENTS ──────────────────────────────────────────────
 // NOT CONNECTED — needs a real payment gateway (Razorpay for India, Stripe
 // for international) plus the backend's /api/v1/payments routes and webhook.

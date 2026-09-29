@@ -57,6 +57,22 @@ export const adminEpisodeApi = {
   update: (id: string, payload: any) => apiClient.patch<any>(`/admin/episodes/${enc(id)}`, payload),
   setFree: (id: string, isFree: boolean) => apiClient.post<any>(`/admin/episodes/${enc(id)}/free`, { is_free: isFree }),
   remove: (id: string) => apiClient.delete<{ id: string; deleted: boolean }>(`/admin/episodes/${enc(id)}`),
+
+  // Video: browser uploads straight to R2 in parts, then the server transcodes
+  startVideoUpload: (id: string, file: { size: number; contentType: string; filename: string }) =>
+    apiClient.post<{ key: string; uploadId: string; partSize: number; parts: { partNumber: number; url: string }[] }>(
+      `/admin/episodes/${enc(id)}/video/upload`, file),
+  completeVideoUpload: (id: string, body: { key: string; uploadId: string; parts: { PartNumber: number; ETag: string }[] }) =>
+    apiClient.post<{ queued: boolean }>(`/admin/episodes/${enc(id)}/video/complete`, body),
+  abortVideoUpload: (id: string, body: { key: string; uploadId: string }) =>
+    apiClient.post<{ aborted: boolean }>(`/admin/episodes/${enc(id)}/video/abort`, body),
+  retryVideo: (id: string) => apiClient.post<{ queued: boolean }>(`/admin/episodes/${enc(id)}/video/retry`),
+}
+
+// ── MEDIA (posters / banners) ──────────────────────────
+export const adminMediaApi = {
+  createImageUpload: (body: { kind: 'poster' | 'banner'; contentType: string; size: number; seriesId?: string }) =>
+    apiClient.post<{ uploadUrl: string; headers: Record<string, string>; url: string; key: string }>('/admin/uploads/image', body),
 }
 
 // ── CATEGORIES ("subcategories" = genres) ──────────────────────────
