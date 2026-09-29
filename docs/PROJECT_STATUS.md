@@ -59,7 +59,7 @@ Migrations: `init`, `series_pricing_defaults` (lock point/price + backfill), `ep
 - **Admin uploads** (`src/lib/admin-upload.ts`, `components/admin/ImageUpload.tsx`, `VideoUpload.tsx`): poster/banner picker (drag-drop, straight to R2); episode video uploader (10 MB parts ×4 parallel, per-part retry, cancel → multipart abort, progress → processing % → ready preview / failed + retry). New episode → "Save & Upload Video" lands on its edit page. Duration is read-only once a video exists (FFmpeg measures it)
 - Deleting an episode/series also removes its R2 files (HLS, raw source, images)
 - `apiClient` waits for Firebase to restore the session before sending requests (direct loads of admin pages used to 401)
-- **Video URL protection built, not deployed**: `workers/media` Worker + signed URLs (`backend/src/lib/media-token.ts`). Deploy steps: `workers/media/README.md` (needs `wrangler login` by the user)
+- **Video URL protection live**: Worker `media-dramatique` at https://media-dramatique.dramatique-media-worker.workers.dev (signed, 2 h, per-episode URLs; images public). Backend (DigitalOcean + local `.env`) uses it via `R2_PUBLIC_BASE_URL` + `MEDIA_TOKEN_SECRET`. Vercel env vars are Config type; R2 CORS + Firebase authorized domains include the Vercel URLs. **Still open: disable the r2.dev public URL on `dramatique-media`**
 - **Hosting prepared**: `backend/Dockerfile` (Node 22 + FFmpeg), multi-origin CORS, graceful shutdown, GitHub Actions checks. Plan: API on **DigitalOcean App Platform, Bangalore**, website on Vercel. Steps: `docs/DEPLOY.md`
 
 ### Demo content
