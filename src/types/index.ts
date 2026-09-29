@@ -33,6 +33,8 @@ export interface WatchedSeries extends Series {
 }
 export interface SeriesAccess {
   is_vip: boolean;
+  can_watch_all: boolean; // VIP or admin
+
   unlocked_episode_ids: string[];
   last_episode: number | null;
 }

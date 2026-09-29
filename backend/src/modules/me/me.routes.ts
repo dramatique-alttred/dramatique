@@ -59,5 +59,5 @@ meRouter.put('/progress', async (req: AuthedRequest, res: Response) => {
 meRouter.get('/series/:seriesId/access', async (req: AuthedRequest, res: Response) => {
   const { seriesId } = req.params as { seriesId: string }
   if (!UUID_RE.test(seriesId)) return res.status(404).json({ error: 'Series not found' })
-  res.json(await me.getSeriesAccess(req.user!.id, req.user!.isVip, seriesId))
+  res.json(await me.getSeriesAccess(req.user!.id, req.user!.isVip, seriesId, req.user!.role === 'ADMIN'))
 })

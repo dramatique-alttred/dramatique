@@ -104,7 +104,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
     if (n === 0) return false // trailer
     const ep = episodeByNumber.get(n)
     if (!ep) return true
-    if (ep.access_type === 'FREE' || access?.is_vip) return false
+    if (ep.access_type === 'FREE' || access?.is_vip || access?.can_watch_all) return false
     return !unlockedIds.has(ep.id)
   }
   const currentEpisode = episodeByNumber.get(currentEp)

@@ -111,7 +111,7 @@ export async function clearWatchHistory(userId: string) {
 
 // ── Per-series access (which episodes this user can play) ──────────────────
 
-export async function getSeriesAccess(userId: string, isVip: boolean, seriesId: string) {
+export async function getSeriesAccess(userId: string, isVip: boolean, seriesId: string, isAdmin = false) {
   const [unlocked, last] = await Promise.all([
     prisma.userUnlockedEpisode.findMany({
       where: { userId, episode: { seriesId } },
@@ -125,6 +125,8 @@ export async function getSeriesAccess(userId: string, isVip: boolean, seriesId: 
   ])
   return {
     is_vip: isVip,
+    // Admins may preview every episode (/playback allows it too)
+    can_watch_all: isVip || isAdmin,
     unlocked_episode_ids: unlocked.map(u => u.episodeId),
     last_episode: last?.episode.episodeNumber ?? null,
   }

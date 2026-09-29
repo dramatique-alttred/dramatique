@@ -19,13 +19,16 @@ export default function AddEpisodePage({ params }: { params: { id: string } }) {
     number: 1, title: '',
     is_free: false, coin_cost: 5, subtitles_url: '', publish_date: '',
   })
+  // Follows the series lock point until the admin flips the toggle themselves
+  const [freeTouched, setFreeTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   // Once real series + episodes load, default episode number to next-in-sequence
   useEffect(() => {
     if (series) {
-      setForm(f => ({ ...f, number: episodes.length + 1, coin_cost: series.coin_cost_per_episode }))
+      const number = episodes.length + 1
+      setForm(f => ({ ...f, number, coin_cost: series.coin_cost_per_episode, is_free: number < series.lock_from_episode }))
     }
   }, [series, episodes.length])
 
@@ -93,7 +96,7 @@ export default function AddEpisodePage({ params }: { params: { id: string } }) {
           <AdminCard>
             <h3 className="text-white font-bold text-sm mb-4">Episode Details</h3>
             <div className="space-y-4">
-              <FormField label="Episode Number" required><Input type="number" value={form.number} onChange={e => set('number', Number(e.target.value))} /></FormField>
+              <FormField label="Episode Number" required><Input type="number" value={form.number} onChange={e => { const n = Number(e.target.value); setForm(f => ({ ...f, number: n, ...(!freeTouched && series && { is_free: n < series.lock_from_episode }) })) }} /></FormField>
               <FormField label="Title" required><Input value={form.title} onChange={e => set('title', e.target.value)} placeholder={`Episode ${form.number}`} /></FormField>
             </div>
           </AdminCard>
@@ -118,7 +121,7 @@ export default function AddEpisodePage({ params }: { params: { id: string } }) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div><p className="text-white text-sm font-medium">Free Episode</p><p className="text-[#5a5a68] text-xs">Overrides series lock</p></div>
-                <Toggle on={form.is_free} onToggle={() => set('is_free', !form.is_free)} />
+                <Toggle on={form.is_free} onToggle={() => { setFreeTouched(true); set('is_free', !form.is_free) }} />
               </div>
               {!form.is_free && (
                 <FormField label="Coin Cost" hint={`Series default: ${series.coin_cost_per_episode}`}><Input type="number" value={form.coin_cost} onChange={e => set('coin_cost', Number(e.target.value))} /></FormField>
