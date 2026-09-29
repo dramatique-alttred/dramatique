@@ -2,26 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
-import { useAllSeries } from '@/hooks'
+import { useSeriesSearch } from '@/hooks'
 import { GENRES } from '@/types'
 import SeriesCard from '@/components/series/SeriesCard'
 
 const TRENDING_SEARCHES = ['CEO Romance', 'Revenge', 'Werewolf', 'Billionaire', 'Forbidden', 'Dragon']
 
 export default function SearchPage() {
-  const { data: MOCK_SERIES = [] } = useAllSeries()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState(MOCK_SERIES)
+  const [debouncedQuery, setDebouncedQuery] = useState('')
 
+  // Wait for a pause in typing before hitting the server
   useEffect(() => {
-    if (!query.trim()) { setResults(MOCK_SERIES); return }
-    const q = query.toLowerCase()
-    setResults(MOCK_SERIES.filter(s =>
-      s.title.toLowerCase().includes(q) ||
-      s.genre.toLowerCase().includes(q) ||
-      s.synopsis.toLowerCase().includes(q)
-    ))
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 250)
+    return () => clearTimeout(t)
   }, [query])
+
+  const { data: results = [] } = useSeriesSearch(debouncedQuery)
 
   return (
     <main className="min-h-screen bg-brand-black pt-20 pb-24 md:pb-12">

@@ -13,8 +13,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Supabase: DATABASE_URL = transaction pooler (port 6543) used by the app;
+  // DIRECT_URL = session pooler (port 5432) used by `prisma migrate`, which
+  // can't run through the transaction pooler.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ───────────────────────────── ENUMS ─────────────────────────────
@@ -275,27 +279,33 @@ model Genre {
 }
 
 model Series {
-  id             String        @id @default(uuid()) @db.Uuid
-  title          String        @db.VarChar(255)
-  slug           String        @unique @db.VarChar(255)
-  synopsis       String?       @db.Text
-  thumbnailUrl   String        @map("thumbnail_url") @db.VarChar(500) // 2:3 poster
-  bannerUrl      String?       @map("banner_url") @db.VarChar(500) // hero / 16:9
-  trailerKey     String?       @map("trailer_key") @db.VarChar(500)
-  language       String        @default("en") @db.VarChar(10)
-  categoryId     Int?          @map("category_id")
-  tags           String[]      @default([])
-  status         PublishStatus @default(DRAFT)
-  publishAt      DateTime?     @map("publish_at")
-  publishedAt    DateTime?     @map("published_at")
-  isFeatured     Boolean       @default(false) @map("is_featured") // hero banner
-  isVipExclusive Boolean       @default(false) @map("is_vip_exclusive")
-  releaseYear    Int?          @map("release_year")
-  viewCount      Int           @default(0) @map("view_count")
-  ratingAvg      Decimal       @default(0) @map("rating_avg") @db.Decimal(2, 1)
-  ratingCount    Int           @default(0) @map("rating_count")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  id               String        @id @default(uuid()) @db.Uuid
+  title            String        @db.VarChar(255)
+  slug             String        @unique @db.VarChar(255)
+  synopsis         String?       @db.Text
+  thumbnailUrl     String        @map("thumbnail_url") @db.VarChar(500) // 2:3 poster
+  bannerUrl        String?       @map("banner_url") @db.VarChar(500) // hero / 16:9
+  trailerKey       String?       @map("trailer_key") @db.VarChar(500)
+  language         String        @default("en") @db.VarChar(10)
+  categoryId       Int?          @map("category_id")
+  tags             String[]      @default([])
+  status           PublishStatus @default(DRAFT)
+  publishAt        DateTime?     @map("publish_at")
+  publishedAt      DateTime?     @map("published_at")
+  isFeatured       Boolean       @default(false) @map("is_featured") // hero banner
+  isVipExclusive   Boolean       @default(false) @map("is_vip_exclusive")
+  releaseYear      Int?          @map("release_year")
+  // Series-wide pricing defaults, set in the admin form. Saving them
+  // re-applies to the series' episodes (1..lockFrom-1 FREE, the rest
+  // COIN_LOCKED at defaultCoinPrice; VIP_ONLY episodes are left alone).
+  // Per-episode accessType/coinPrice stay the source of truth for access.
+  lockFromEpisode  Int           @default(1) @map("lock_from_episode")
+  defaultCoinPrice Int           @default(5) @map("default_coin_price")
+  viewCount        Int           @default(0) @map("view_count")
+  ratingAvg        Decimal       @default(0) @map("rating_avg") @db.Decimal(2, 1)
+  ratingCount      Int           @default(0) @map("rating_count")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   category      Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   genres        SeriesGenre[]
@@ -347,6 +357,7 @@ model Episode {
   subtitlesKey      String?     @map("subtitles_key") @db.VarChar(500)
   mediaConvertJobId String?     @map("media_convert_job_id") @db.VarChar(100)
   videoError        String?     @map("video_error") @db.VarChar(500)
+  transcodeProgress Int         @default(0) @map("transcode_progress") // 0-100 while PROCESSING
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

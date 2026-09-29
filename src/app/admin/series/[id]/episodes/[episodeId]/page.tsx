@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, FormField, Input, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
+import VideoUpload from '@/components/admin/VideoUpload'
 import { useAdminSeriesOne, useAdminEpisodeOne, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminEpisodeApi } from '@/lib/admin-api'
-import { Save, Film, Loader2, Trash2 } from 'lucide-react'
+import { Save, Loader2, Trash2 } from 'lucide-react'
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60)
@@ -39,7 +40,6 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
         duration: formatDuration(episode.duration_seconds),
         is_free: episode.is_free,
         coin_cost: episode.coin_cost ?? series?.coin_cost_per_episode ?? 5,
-        video_id: episode.video_id || '',
         subtitles_url: episode.subtitles_url || '',
       })
     }
@@ -56,6 +56,12 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
   }
 
   const set = (k: string, v: any) => setForm((p: any) => ({ ...p, [k]: v }))
+  // Once a video exists, FFmpeg measures the duration — don't let the form overwrite it
+  const durationLocked = !!episode.video_url || episode.has_source
+  const refreshEpisode = () => Promise.all([
+    qc.invalidateQueries({ queryKey: ['admin', 'episode', params.episodeId] }),
+    qc.invalidateQueries({ queryKey: adminKeys.episodes(params.id) }),
+  ])
 
   const handleSave = async () => {
     setSaving(true)
@@ -64,12 +70,10 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
       await adminEpisodeApi.update(params.episodeId, {
         episode_number: form.episode_number,
         title: form.title,
-        duration_seconds: parseDuration(form.duration),
+        ...(!durationLocked && { duration_seconds: parseDuration(form.duration) }),
         is_free: form.is_free,
         coin_cost: form.is_free ? null : form.coin_cost,
-        video_id: form.video_id || null,
         subtitles_url: form.subtitles_url || null,
-        status: form.video_id ? 'ready' : 'pending',
       })
       qc.invalidateQueries({ queryKey: adminKeys.episodes(params.id) })
       qc.invalidateQueries({ queryKey: ['admin', 'episode', params.episodeId] })
@@ -126,7 +130,13 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField label="Episode Number" required><Input type="number" value={form.episode_number} onChange={e => set('episode_number', Number(e.target.value))} /></FormField>
-                <FormField label="Duration" hint="e.g. 1:05"><Input value={form.duration} onChange={e => set('duration', e.target.value)} placeholder="1:05" /></FormField>
+                {durationLocked ? (
+                  <FormField label="Duration" hint="Detected from the video">
+                    <Input value={episode.status === 'ready' ? formatDuration(episode.duration_seconds) : 'After processing'} readOnly disabled />
+                  </FormField>
+                ) : (
+                  <FormField label="Duration" hint="Set automatically once a video is uploaded"><Input value={form.duration} onChange={e => set('duration', e.target.value)} placeholder="1:05" /></FormField>
+                )}
               </div>
               <FormField label="Title" required><Input value={form.title} onChange={e => set('title', e.target.value)} /></FormField>
             </div>
@@ -135,13 +145,7 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
           <AdminCard>
             <h3 className="text-white font-bold text-sm mb-4">Video</h3>
             <div className="space-y-4">
-              <div className="flex items-center gap-3 bg-[#0a0a0f] border border-[#24242f] rounded-xl p-4">
-                <Film size={20} className="text-[#5a5a68] flex-shrink-0" />
-                <p className="text-xs text-[#8b8b9a]">
-                  {episode.status === 'ready' ? <span className="text-emerald-400">✓ Video linked and ready</span> : <span className="text-amber-400">Video not yet linked</span>}
-                </p>
-              </div>
-              <FormField label="Cloudflare Video ID"><Input value={form.video_id} onChange={e => set('video_id', e.target.value)} placeholder="e.g. a1b2c3d4..." /></FormField>
+              <VideoUpload episode={episode} onChanged={refreshEpisode} />
               <FormField label="Subtitles URL" hint="Optional — WebVTT file"><Input value={form.subtitles_url} onChange={e => set('subtitles_url', e.target.value)} placeholder="https://..." /></FormField>
             </div>
           </AdminCard>

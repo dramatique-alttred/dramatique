@@ -28,6 +28,7 @@ export default function SeriesManagerPage() {
           className="bg-[#15151d] border border-[#24242f] rounded-xl px-3 py-2.5 text-[#c2c2ce] text-sm outline-none focus:border-[#e8001d]">
           <option value="all">All Status</option>
           <option value="published">Published</option>
+          <option value="scheduled">Scheduled</option>
           <option value="draft">Draft</option>
           <option value="archived">Archived</option>
         </select>
@@ -59,8 +60,8 @@ export default function SeriesManagerPage() {
             <TD className="text-green-400 font-semibold">{s.revenue > 0 ? `₹${(s.revenue / 100).toLocaleString()}` : '—'}</TD>
             <TD>
               <AdminBadge
-                label={s.status}
-                color={s.status === 'published' ? 'green' : s.status === 'draft' ? 'yellow' : 'gray'}
+                label={s.status === 'scheduled' && s.publish_at ? `scheduled · ${new Date(s.publish_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : s.status}
+                color={s.status === 'published' ? 'green' : s.status === 'scheduled' ? 'blue' : s.status === 'draft' ? 'yellow' : 'gray'}
               />
             </TD>
             <TD>

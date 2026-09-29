@@ -1,0 +1,15 @@
+# Media gateway: the only public way into the dramatique-media bucket.
+#   images/*                         → public (posters, banners)
+#   t/<token>/videos/<episodeId>/…   → needs a valid, unexpired token from the API
+# Setup and deploy steps: workers/media/README.md
+name = "media-dramatique"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "dramatique-media"
+
+# Secret, set with: npx wrangler secret put MEDIA_TOKEN_SECRET
+# (must equal MEDIA_TOKEN_SECRET in backend/.env)

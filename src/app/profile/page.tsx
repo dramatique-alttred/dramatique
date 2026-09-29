@@ -11,6 +11,7 @@ import LoginModal from '@/components/ui/LoginModal'
 import { useAuthStore } from '@/store/authStore'
 import { useCoinStore } from '@/store/coinStore'
 import { signOut } from '@/lib/auth'
+import { useDailyReward, useClaimReward } from '@/hooks'
 
 const COIN_PACKS = [
   { coins: 30,   price: '₹89',    badge: '' },
@@ -25,7 +26,8 @@ export default function ProfilePage() {
   const coins = useCoinStore(s => s.balance)
   const [loginOpen, setLoginOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [checkedIn, setCheckedIn] = useState(false)
+  const { data: reward } = useDailyReward()
+  const claimReward = useClaimReward()
   const referralCode = user?.referral_code || '—'
 
   const copyReferral = () => {
@@ -33,6 +35,12 @@ export default function ProfilePage() {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  // 7-day strip: days already checked in this week, then today's slot
+  const streak = reward?.streak ?? 0
+  const claimedToday = !!reward?.claimed_today
+  const rewardCoins = reward?.reward ?? 5
+  const filledDays = claimedToday ? ((streak - 1) % 7) + 1 : streak % 7
 
   if (!isLoggedIn) {
     return (
@@ -121,19 +129,23 @@ export default function ProfilePage() {
               <Gift size={18} className="text-brand-red" />
               <h3 className="text-white font-semibold text-sm">Daily Reward</h3>
             </div>
-            <span className="text-brand-subtle text-xs">🔥 3 day streak</span>
+            {streak > 0 && <span className="text-brand-subtle text-xs">🔥 {streak} day streak</span>}
           </div>
           <div className="grid grid-cols-7 gap-1.5 mb-3">
-            {Array.from({ length: 7 }, (_, i) => (
-              <div key={i} className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[9px] font-bold ${i < 3 ? 'bg-brand-red/20 border border-brand-red/40 text-brand-red' : i === 3 ? 'bg-brand-red border border-brand-red text-white' : 'bg-brand-dark border border-brand-border text-brand-muted'}`}>
-                <span>{i < 3 ? '✓' : i === 3 ? '🪙' : '🪙'}</span>
-                <span className="mt-0.5">{i < 3 ? '' : '+5'}</span>
-              </div>
-            ))}
+            {Array.from({ length: 7 }, (_, i) => {
+              const done = i < filledDays
+              const today = !claimedToday && i === filledDays
+              return (
+                <div key={i} className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[9px] font-bold ${done ? 'bg-brand-red/20 border border-brand-red/40 text-brand-red' : today ? 'bg-brand-red border border-brand-red text-white' : 'bg-brand-dark border border-brand-border text-brand-muted'}`}>
+                  <span>{done ? '✓' : '🪙'}</span>
+                  <span className="mt-0.5">{done ? '' : `+${rewardCoins}`}</span>
+                </div>
+              )
+            })}
           </div>
-          <button onClick={() => setCheckedIn(true)} disabled={checkedIn}
-            className={`w-full py-2.5 rounded-xl font-bold text-sm transition-colors ${checkedIn ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'btn-primary'}`}>
-            {checkedIn ? '✅ Claimed Today — +5 Coins' : 'Claim +5 Coins Today'}
+          <button onClick={() => claimReward.mutate()} disabled={claimedToday || claimReward.isPending || !reward}
+            className={`w-full py-2.5 rounded-xl font-bold text-sm transition-colors ${claimedToday ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'btn-primary disabled:opacity-60'}`}>
+            {claimedToday ? `✅ Claimed Today — +${rewardCoins} Coins` : claimReward.isPending ? 'Claiming…' : `Claim +${rewardCoins} Coins Today`}
           </button>
         </div>
 

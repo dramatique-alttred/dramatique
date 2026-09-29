@@ -5,18 +5,19 @@ import HeroBanner from '@/components/series/HeroBanner'
 import SeriesRow from '@/components/series/SeriesRow'
 import GenreDiscovery from '@/components/series/GenreDiscovery'
 
+// Row ids come from the backend feed (/catalog/feed); genre rows are "genre-<slug>"
 const SEE_ALL: Record<string, string> = {
   trending: '/new-hot',
   new: '/new-hot',
-  ceo: '/categories?genre=CEO+Romance',
   vip: '/vip',
-  super: '/categories?genre=Supernatural',
-  picks: '/new-hot',
+  'top-rated': '/new-hot',
 }
+const seeAllFor = (id: string, title: string) =>
+  SEE_ALL[id] ?? (id.startsWith('genre-') ? `/categories?genre=${encodeURIComponent(title)}` : undefined)
 
 export default function HomePage() {
-  const { data: feed, isLoading: feedLoading } = useSeriesFeed()
-  const { data: heroSeries, isLoading: heroLoading } = useHeroSeries()
+  const { data: feed, isLoading: feedLoading, isFetching: feedFetching, refetch: refetchFeed } = useSeriesFeed()
+  const { data: heroSeries, isLoading: heroLoading, refetch: refetchHero } = useHeroSeries()
   const { data: continueWatching } = useContinueWatching()
 
   return (
@@ -34,6 +35,17 @@ export default function HomePage() {
           />
         )}
 
+        {/* No data and nothing in flight = failed or paused (e.g. API
+            unreachable) — never leave the user on a blank page */}
+        {!feed && !feedFetching && (
+          <div className="flex flex-col items-center justify-center text-center py-24 px-4">
+            <div className="text-5xl mb-4">📡</div>
+            <h2 className="text-white font-bold text-xl mb-2">Couldn&apos;t load dramas</h2>
+            <p className="text-brand-subtle text-sm mb-6 max-w-xs">Check your connection and try again.</p>
+            <button onClick={() => { refetchFeed(); refetchHero() }} className="btn-primary px-8 py-3">Try Again</button>
+          </div>
+        )}
+
         {feedLoading
           ? Array.from({ length: 3 }).map((_, i) => (
               <SeriesRow key={i} title="" series={[]} loading={true} />
@@ -45,7 +57,7 @@ export default function HomePage() {
                   subtitle={section.subtitle}
                   kind={section.kind}
                   series={section.series}
-                  seeAllHref={SEE_ALL[section.id]}
+                  seeAllHref={seeAllFor(section.id, section.title)}
                 />
                 {/* Genre discovery injected mid-feed for browsing variety */}
                 {idx === 1 && <GenreDiscovery />}

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { signInWithPassword, fetchProfile, signOut } from '@/lib/auth'
+import { signInWithPassword, signInWithGoogle, fetchProfile, signOut } from '@/lib/auth'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -13,13 +13,13 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Shared by both sign-in methods: only ADMIN-role accounts get through
+  const signInAsAdmin = async (signIn: () => Promise<unknown>) => {
     setLoading(true)
     setError('')
 
     try {
-      await signInWithPassword(email, password)
+      await signIn()
       const profile = await fetchProfile()
 
       if (profile.role !== 'ADMIN') {
@@ -34,9 +34,16 @@ export default function AdminLoginPage() {
     } catch (err: any) {
       setError(err.code === 'auth/invalid-credential'
         ? 'Invalid email or password'
-        : (err.message || 'Something went wrong. Try again.'))
+        : err.code === 'auth/popup-closed-by-user'
+          ? ''
+          : (err.message || 'Something went wrong. Try again.'))
       setLoading(false)
     }
+  }
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    signInAsAdmin(() => signInWithPassword(email, password))
   }
 
   return (
@@ -86,6 +93,15 @@ export default function AdminLoginPage() {
             className="w-full bg-[#e8001d] hover:bg-[#c8001a] disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mt-2">
             {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+
+          <div className="flex items-center gap-3 text-[#5a5a68] text-xs">
+            <div className="flex-1 h-px bg-[#24242f]" />or<div className="flex-1 h-px bg-[#24242f]" />
+          </div>
+
+          <button type="button" disabled={loading} onClick={() => signInAsAdmin(signInWithGoogle)}
+            className="w-full bg-white hover:bg-gray-100 disabled:opacity-50 text-[#0a0a0f] font-bold py-3 rounded-xl transition-colors">
+            Continue with Google
           </button>
         </form>
       </div>

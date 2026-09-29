@@ -22,7 +22,9 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-white font-bold text-2xl">Dashboard</h1>
-          <p className="text-[#8b8b9a] text-sm mt-0.5">Saturday, 15 August 2026</p>
+          <p className="text-[#8b8b9a] text-sm mt-0.5" suppressHydrationWarning>
+            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })}
+          </p>
         </div>
         <AdminBtn href="/admin/series/new" variant="primary"><Plus size={15} /> Add Series</AdminBtn>
       </div>

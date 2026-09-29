@@ -3,10 +3,20 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
+import ImageUpload from '@/components/admin/ImageUpload'
 import { AdminPageHeader, FormField, Input, Select, Textarea, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
 import { useAdminCategories, useAdminSubcategories } from '@/hooks/admin/useAdminQueries'
 import { adminSeriesApi } from '@/lib/admin-api'
 import { Save, Loader2 } from 'lucide-react'
+
+// <input type="datetime-local"> works in local time without a timezone;
+// the API wants ISO. Convert both ways.
+const toLocalInput = (iso?: string | null) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+}
+const toIso = (local: string) => (local ? new Date(local).toISOString() : null)
 
 export default function AddSeriesPage() {
   const router = useRouter()
@@ -17,7 +27,7 @@ export default function AddSeriesPage() {
     thumbnail_url: '', hero_url: '', lock_from_episode: 3,
     coin_cost_per_episode: 5, primary_category: '',
     subcategories: [] as string[], tags: '',
-    is_featured: false, status: 'draft',
+    is_featured: false, status: 'draft', publish_at: '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -40,10 +50,14 @@ export default function AddSeriesPage() {
       setError('Title, slug, and primary category are required.')
       return
     }
+    if (form.status === 'scheduled' && !form.publish_at) {
+      setError('Pick a publish date and time to schedule this series.')
+      return
+    }
     setSaving(true)
     setError('')
     try {
-      const created = await adminSeriesApi.create(form)
+      const created = await adminSeriesApi.create({ ...form, publish_at: toIso(form.publish_at) })
       router.push(`/admin/series/${created.id}/episodes`)
     } catch (err: any) {
       setError(err.message || 'Could not save series. Try again.')
@@ -97,10 +111,16 @@ export default function AddSeriesPage() {
                 <FormField label="Status" required>
                   <Select value={form.status} onChange={e => set('status', e.target.value)}>
                     <option value="draft">Draft</option>
+                    <option value="scheduled">Scheduled</option>
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
                   </Select>
                 </FormField>
+                {form.status === 'scheduled' && (
+                  <FormField label="Publish at" required hint="Goes live automatically at this time">
+                    <Input type="datetime-local" value={form.publish_at} onChange={e => set('publish_at', e.target.value)} />
+                  </FormField>
+                )}
               </div>
             </div>
           </AdminCard>
@@ -152,11 +172,11 @@ export default function AddSeriesPage() {
               </p>
             </div>
             <div className="space-y-4">
-              <FormField label="Thumbnail URL" hint="Portrait 2:3 ratio — used in series cards">
-                <Input value={form.thumbnail_url} onChange={e => set('thumbnail_url', e.target.value)} placeholder="https://..." />
+              <FormField label="Poster" hint="Portrait 2:3 — used on series cards">
+                <ImageUpload kind="poster" value={form.thumbnail_url} onChange={url => set('thumbnail_url', url)} />
               </FormField>
-              <FormField label="Hero Image URL" hint="Landscape 16:9 — used in hero banner">
-                <Input value={form.hero_url} onChange={e => set('hero_url', e.target.value)} placeholder="https://..." />
+              <FormField label="Banner" hint="Landscape 16:9 — used in the home page hero">
+                <ImageUpload kind="banner" value={form.hero_url} onChange={url => set('hero_url', url)} />
               </FormField>
             </div>
           </AdminCard>

@@ -1,0 +1,57 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      # The same image DigitalOcean builds; fails here before it fails there
+      - run: docker build -t dramatique-api .
+      - name: Image starts, has FFmpeg, answers /health
+        run: |
+          docker run --rm --entrypoint sh dramatique-api -c "ffmpeg -version | head -1 && ffprobe -version | head -1"
+          docker run -d --name api -p 8080:8080 dramatique-api
+          for i in $(seq 1 20); do curl -fs localhost:8080/health && exit 0; sleep 1; done
+          docker logs api; exit 1
+
+  media-worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/media
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: workers/media/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit

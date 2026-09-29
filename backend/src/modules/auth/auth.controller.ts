@@ -1,6 +1,7 @@
 import { Response } from 'express'
 import { AuthedRequest, isVipActive } from '../../middleware/auth.middleware'
 import { prisma } from '../../config/prisma'
+import { grantWelcomeBonus } from '../coins/ledger'
 
 /**
  * POST /api/v1/auth/verify-firebase
@@ -9,6 +10,10 @@ import { prisma } from '../../config/prisma'
  * frontend can hydrate its auth store right after login.
  */
 export async function verifyFirebase(req: AuthedRequest, res: Response) {
+  // UX flow: "Account Created → Welcome Bonus". Runs on every login but pays
+  // out once (idempotency key), including when a guest upgrades their account.
+  const welcomeBonusGranted = req.user!.isGuest ? false : await grantWelcomeBonus(req.user!.id)
+
   const user = await prisma.user.update({
     where: { id: req.user!.id },
     data: { lastLoginAt: new Date() },
@@ -27,5 +32,6 @@ export async function verifyFirebase(req: AuthedRequest, res: Response) {
     vipExpiresAt: user.vipUntil,
     referralCode: user.referralCode,
     coins: user.wallet?.balance ?? 0,
+    welcomeBonusGranted,
   })
 }
