@@ -1,7 +1,8 @@
-import { Prisma, PublishStatus, VideoStatus } from '@prisma/client'
+import { Prisma, PublishStatus } from '@prisma/client'
 import { prisma } from '../../config/prisma'
 import { HttpError } from '../../lib/http'
 import { LANGUAGE_NAMES } from '../catalog/catalog.service'
+import { publicUrl } from '../../lib/storage'
 import { has, str, int, bool, url, date, SLUG_RE, paging } from './validate'
 
 type Body = Record<string, unknown>
@@ -245,11 +246,14 @@ function toAdminEpisode(e: EpisodeRow) {
     access_type: e.accessType,
     is_free: e.accessType === 'FREE',
     coin_cost: e.coinPrice,
-    // Until the upload pipeline exists, admins paste the HLS manifest path/URL here
     video_id: e.hlsManifestKey ?? '',
-    video_url: e.hlsManifestKey ?? '',
+    // Admin preview; viewers go through /playback, which checks access
+    video_url: e.hlsManifestKey ? publicUrl(e.hlsManifestKey) : '',
     subtitles_url: e.subtitlesKey ?? '',
     status: e.videoStatus.toLowerCase(), // video pipeline state: pending/uploaded/processing/ready/failed
+    transcode_progress: e.transcodeProgress,
+    video_error: e.videoError ?? '',
+    has_source: !!e.sourceKey,
     publish_status: e.status.toLowerCase(),
     publish_at: iso(e.publishAt),
     views: e.viewCount,
@@ -266,12 +270,6 @@ export async function getEpisode(id: string) {
   const row = await prisma.episode.findUnique({ where: { id } })
   if (!row) throw new HttpError(404, 'Episode not found')
   return toAdminEpisode(row)
-}
-
-function videoFields(body: Body) {
-  if (!has(body, 'video_id')) return {}
-  const key = str(body, 'video_id', { max: 500, label: 'Video' }) || null
-  return { hlsManifestKey: key, videoStatus: (key ? 'READY' : 'PENDING') as VideoStatus }
 }
 
 export async function createEpisode(seriesId: string, body: Body) {
@@ -297,7 +295,6 @@ export async function createEpisode(seriesId: string, body: Body) {
       accessType: isFree ? 'FREE' : 'COIN_LOCKED',
       coinPrice,
       subtitlesKey: str(body, 'subtitles_url', { max: 500 }) || null,
-      ...videoFields(body),
       status: scheduled ? 'SCHEDULED' : 'PUBLISHED',
       publishAt: scheduled ? publishAt : null,
       publishedAt: scheduled ? null : new Date(),
@@ -310,7 +307,9 @@ export async function updateEpisode(id: string, body: Body) {
   const current = await prisma.episode.findUnique({ where: { id }, include: { series: true } })
   if (!current) throw new HttpError(404, 'Episode not found')
 
-  const data: Prisma.EpisodeUncheckedUpdateInput = { ...videoFields(body) }
+  // Video fields are owned by the upload/transcode pipeline (video.service),
+  // never by this form — a stale form save must not clobber processing state
+  const data: Prisma.EpisodeUncheckedUpdateInput = {}
   const number = int(body, has(body, 'episode_number') ? 'episode_number' : 'number', { min: 1, max: 10000, label: 'Episode number' })
   if (number !== undefined) data.episodeNumber = number
   if (has(body, 'title')) data.title = str(body, 'title', { max: 255 }) || `Episode ${number ?? current.episodeNumber}`

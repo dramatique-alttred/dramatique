@@ -357,6 +357,7 @@ model Episode {
   subtitlesKey      String?     @map("subtitles_key") @db.VarChar(500)
   mediaConvertJobId String?     @map("media_convert_job_id") @db.VarChar(100)
   videoError        String?     @map("video_error") @db.VarChar(500)
+  transcodeProgress Int         @default(0) @map("transcode_progress") // 0-100 while PROCESSING
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

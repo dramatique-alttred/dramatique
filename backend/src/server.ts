@@ -7,6 +7,8 @@ import { catalogRouter } from './modules/catalog/catalog.routes'
 import { meRouter } from './modules/me/me.routes'
 import { coinsRouter } from './modules/coins/coins.routes'
 import { adminRouter } from './modules/admin/admin.routes'
+import { playbackRouter } from './modules/video/playback.routes'
+import { resumePendingJobs } from './modules/video/video.service'
 
 const app = express()
 
@@ -21,6 +23,7 @@ app.use('/api/v1/catalog', catalogRouter)
 app.use('/api/v1/me', meRouter)
 app.use('/api/v1/coins', coinsRouter)
 app.use('/api/v1/admin', adminRouter)
+app.use('/api/v1/playback', playbackRouter)
 
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }))
 
@@ -31,4 +34,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 })
 
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => console.log(`[server] listening on http://localhost:${PORT}`))
+app.listen(PORT, () => {
+  console.log(`[server] listening on http://localhost:${PORT}`)
+  resumePendingJobs().catch(err => console.error('[video] could not resume jobs:', err))
+})

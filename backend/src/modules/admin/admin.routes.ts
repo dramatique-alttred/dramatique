@@ -8,6 +8,7 @@ import * as taxonomy from './admin.taxonomy'
 import * as users from './admin.users'
 import * as reports from './admin.reports'
 import * as settings from './admin.settings'
+import * as video from '../video/video.service'
 
 // Everything here is ADMIN-only, enforced server-side (the admin UI's own
 // check is just UX). Mounted at /api/v1/admin.
@@ -51,6 +52,13 @@ adminRouter.get('/episodes/:id', route(req => content.getEpisode(uuid(req, 'id')
 adminRouter.patch('/episodes/:id', route(req => content.updateEpisode(uuid(req, 'id'), body(req))))
 adminRouter.post('/episodes/:id/free', route(req => content.setEpisodeFree(uuid(req, 'id'), body(req))))
 adminRouter.delete('/episodes/:id', route(req => content.deleteEpisode(uuid(req, 'id'))))
+
+// ── Media uploads (direct browser → R2) & video processing ──
+adminRouter.post('/uploads/image', route(req => video.createImageUpload(body(req))))
+adminRouter.post('/episodes/:id/video/upload', route(req => video.createVideoUpload(uuid(req, 'id'), body(req))))
+adminRouter.post('/episodes/:id/video/complete', route(req => video.completeVideoUpload(uuid(req, 'id'), body(req))))
+adminRouter.post('/episodes/:id/video/abort', route(req => video.abortVideoUpload(uuid(req, 'id'), body(req))))
+adminRouter.post('/episodes/:id/video/retry', route(req => video.retryTranscode(uuid(req, 'id'))))
 
 // ── Categories & genres ("subcategories") ──
 adminRouter.get('/categories', route(() => taxonomy.listCategories()))
