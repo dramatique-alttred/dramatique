@@ -57,12 +57,28 @@ export async function probe(file: string): Promise<Probe> {
   // Phones record portrait video as landscape + a rotation flag
   const rotation = Math.abs(Number(video.side_data_list?.find((d: any) => d.rotation !== undefined)?.rotation ?? video.tags?.rotate ?? 0))
   const swap = rotation === 90 || rotation === 270
+  const declared = Number(json.format?.duration ?? video.duration)
   return {
     width: swap ? video.height : video.width,
     height: swap ? video.width : video.height,
-    duration: Number(json.format?.duration ?? video.duration ?? 0),
+    duration: declared > 0 ? declared : await lastFrameTime(file),
     hasAudio: json.streams.some((s: any) => s.codec_type === 'audio'),
   }
+}
+
+/**
+ * Browser and screen recordings (MediaRecorder WebM) often have no duration
+ * in the header. Reading packet timestamps is fast (no decoding) and gives
+ * the time of the last frame instead.
+ */
+async function lastFrameTime(file: string): Promise<number> {
+  const out = await run(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=pts_time', '-of', 'csv=p=0', file])
+  let last = 0
+  for (const line of out.split(/\r?\n/)) {
+    const t = parseFloat(line)
+    if (t > last) last = t
+  }
+  return last
 }
 
 export const ffmpegTranscoder: Transcoder = {
