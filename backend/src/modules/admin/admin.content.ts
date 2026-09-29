@@ -3,6 +3,7 @@ import { prisma } from '../../config/prisma'
 import { HttpError } from '../../lib/http'
 import { LANGUAGE_NAMES } from '../catalog/catalog.service'
 import { publicUrl } from '../../lib/storage'
+import { deleteEpisodeMedia, deleteSeriesMedia } from '../video/video.service'
 import { has, str, int, bool, url, date, SLUG_RE, paging } from './validate'
 
 type Body = Record<string, unknown>
@@ -226,7 +227,10 @@ export async function setSeriesStatus(id: string, body: Body) {
 }
 
 export async function deleteSeries(id: string) {
-  await prisma.series.delete({ where: { id } })
+  const series = await prisma.series.findUnique({ where: { id }, include: { episodes: { select: { id: true } } } })
+  if (!series) throw new HttpError(404, 'Series not found')
+  await prisma.series.delete({ where: { id } }) // episodes cascade
+  await deleteSeriesMedia(id, series.episodes.map(e => e.id), [series.thumbnailUrl, series.bannerUrl])
   return { id, deleted: true }
 }
 
@@ -337,5 +341,6 @@ export async function setEpisodeFree(id: string, body: Body) {
 
 export async function deleteEpisode(id: string) {
   await prisma.episode.delete({ where: { id } })
+  await deleteEpisodeMedia(id)
   return { id, deleted: true }
 }

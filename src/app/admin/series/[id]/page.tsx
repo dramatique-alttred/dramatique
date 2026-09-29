@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import AdminLayout from '@/components/admin/AdminLayout'
+import ImageUpload from '@/components/admin/ImageUpload'
 import { AdminPageHeader, FormField, Input, Select, Textarea, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
 import { useAdminCategories, useAdminSubcategories, useAdminSeriesOne, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminSeriesApi } from '@/lib/admin-api'
@@ -177,11 +178,11 @@ export default function EditSeriesPage({ params }: { params: { id: string } }) {
           <AdminCard>
             <h3 className="text-white font-bold text-sm mb-4">Images</h3>
             <div className="space-y-4">
-              <FormField label="Thumbnail URL" hint="Portrait 2:3 ratio — used in series cards">
-                <Input value={form.thumbnail_url} onChange={e => set('thumbnail_url', e.target.value)} placeholder="https://..." />
+              <FormField label="Poster" hint="Portrait 2:3 — used on series cards">
+                <ImageUpload kind="poster" value={form.thumbnail_url} onChange={url => set('thumbnail_url', url)} seriesId={params.id} />
               </FormField>
-              <FormField label="Hero Image URL" hint="Landscape 16:9 — used in hero banner">
-                <Input value={form.hero_url} onChange={e => set('hero_url', e.target.value)} placeholder="https://..." />
+              <FormField label="Banner" hint="Landscape 16:9 — used in the home page hero">
+                <ImageUpload kind="banner" value={form.hero_url} onChange={url => set('hero_url', url)} seriesId={params.id} />
               </FormField>
             </div>
           </AdminCard>

@@ -11,6 +11,9 @@ export class ApiError extends Error {
 }
 
 async function authHeader(): Promise<Record<string, string>> {
+  // On a fresh page load Firebase restores the session asynchronously; without
+  // waiting, requests fired on mount go out unauthenticated (401)
+  await firebaseAuth?.authStateReady()
   const token = await firebaseAuth?.currentUser?.getIdToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }

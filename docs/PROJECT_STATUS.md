@@ -55,6 +55,9 @@ Migrations: `init`, `series_pricing_defaults` (lock point/price + backfill), `ep
 - **Series page player**: Shaka `VideoPlayer`; locked → paywall; unlock → plays; no video → "coming soon"; **episode end → auto-plays next (or paywall)**; progress saved every 10 s
 - **Admin panel on real data**: dashboard, series (incl. Scheduled + publish time, poster/banner URL fields), episodes, categories, users, transactions, analytics, settings, notifications; `/admin` redirects; admin login has "Continue with Google"
 - Mock data files deleted (`mock-data.ts`, `admin-mock-data.ts`)
+- **Admin uploads** (`src/lib/admin-upload.ts`, `components/admin/ImageUpload.tsx`, `VideoUpload.tsx`): poster/banner picker (drag-drop, straight to R2); episode video uploader (10 MB parts ×4 parallel, per-part retry, cancel → multipart abort, progress → processing % → ready preview / failed + retry). New episode → "Save & Upload Video" lands on its edit page. Duration is read-only once a video exists (FFmpeg measures it)
+- Deleting an episode/series also removes its R2 files (HLS, raw source, images)
+- `apiClient` waits for Firebase to restore the session before sending requests (direct loads of admin pages used to 401)
 
 ### Demo content
 *Forbidden CEO* episodes **1, 2 (free) and 7 (locked)** have 30-second demo videos (labelled test pattern) transcoded to HLS on R2.
@@ -64,20 +67,15 @@ Backend flows were tested end-to-end against real Supabase/R2 with throwaway use
 
 ## 4. What's NOT done yet (next steps, in order)
 
-1. **Admin upload UI** — the backend + `admin-api.ts` functions (`adminMediaApi.createImageUpload`, `adminEpisodeApi.startVideoUpload/completeVideoUpload/abortVideoUpload/retryVideo`) and live polling hooks exist. Still to build:
-   - `ImageUpload` component for poster/banner on `admin/series/new` and `admin/series/[id]` (replace/augment URL inputs)
-   - `VideoUpload` component on `admin/series/[id]/episodes/[episodeId]` — replace the old "Cloudflare Video ID" field; multipart PUT with progress (XHR, read `ETag`), status chip (uploading → processing % → ready/failed + retry), preview with `VideoPlayer`
-   - Make **Duration** read-only once a video exists (FFmpeg detects it); stop sending `video_id`/`status` from the episode form
-   - Episodes list: show processing % / ready / failed
-2. **Protect video URLs** — currently the HLS URLs on r2.dev are public if shared. Needs: own domain (e.g. `media.dramatique.com`) on Cloudflare → R2 custom domain → Cloudflare Worker validating short-lived signed tokens issued by `/playback`; Shaka request filter to append the token. **Needs a domain** (not decided yet)
-3. **Redis** for watch-progress hot writes (plan: sync across devices within 2 s)
-4. **Onboarding genre picker** (UX flow step 1; `user_genre_preferences` table exists) + personalised feed
-5. **Phone OTP** login (needs Firebase billing)
-6. **Phase 4 — Payments**: Razorpay (coin packs + VIP), secure webhooks → ledger/subscriptions; connect admin **Plans** page (still sample data); VIP subscriptions
-7. **Referrals** (invite rewards), **rewarded ads** (AdMob), **push notifications** (FCM)
-8. **Blog** admin/site (still sample data; not in plan)
-9. **Phase 5**: deploy (backend + FFmpeg worker in Mumbai, Next.js), production CORS origins, R2 custom domain, monitoring, load testing, UAT on Jio/Airtel/Vi
-10. Merge branch `phase-2-catalog-api` → `main` when happy
+1. **Protect video URLs** — currently the HLS URLs on r2.dev are public if shared. Needs: own domain (e.g. `media.dramatique.com`) on Cloudflare → R2 custom domain → Cloudflare Worker validating short-lived signed tokens issued by `/playback`; Shaka request filter to append the token. **Needs a domain** (not decided yet)
+2. **Redis** for watch-progress hot writes (plan: sync across devices within 2 s)
+3. **Onboarding genre picker** (UX flow step 1; `user_genre_preferences` table exists) + personalised feed
+4. **Phone OTP** login (needs Firebase billing)
+5. **Phase 4 — Payments**: Razorpay (coin packs + VIP), secure webhooks → ledger/subscriptions; connect admin **Plans** page (still sample data); VIP subscriptions
+6. **Referrals** (invite rewards), **rewarded ads** (AdMob), **push notifications** (FCM)
+7. **Blog** admin/site (still sample data; not in plan)
+8. **Phase 5**: deploy (backend + FFmpeg worker in Mumbai, Next.js), production CORS origins, R2 custom domain, monitoring, load testing, UAT on Jio/Airtel/Vi
+9. Merge branch `phase-2-catalog-api` → `main` when happy
 
 ## 5. How to run locally
 

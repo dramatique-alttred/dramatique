@@ -35,7 +35,8 @@ export default function EpisodeManagerPage({ params }: { params: { id: string } 
 
   const statusColor = (status: string) => {
     if (status === 'ready') return 'green'
-    if (status === 'processing') return 'yellow'
+    if (status === 'processing' || status === 'uploaded') return 'yellow'
+    if (status === 'failed') return 'red'
     return 'gray'
   }
 
@@ -62,7 +63,6 @@ export default function EpisodeManagerPage({ params }: { params: { id: string } 
         subtitle={`${episodes.length} episodes · Lock from Ep ${series.lock_from_episode} · ${series.coin_cost_per_episode} coins each`}
         action={
           <div className="flex gap-2">
-            <AdminBtn variant="outline"><Upload size={14} /> Bulk Upload</AdminBtn>
             <AdminBtn href={`/admin/series/${params.id}/episodes/new`} variant="primary"><Plus size={14} /> Add Episode</AdminBtn>
           </div>
         }
@@ -99,12 +99,18 @@ export default function EpisodeManagerPage({ params }: { params: { id: string } 
             <TD><Toggle on={ep.is_free} onToggle={() => toggleFree(ep.id, ep.is_free)} /></TD>
             <TD>{ep.is_free ? <span className="text-green-400 text-xs font-bold">FREE</span> : <span className="text-[#c2c2ce] text-xs">{ep.coin_cost ?? series.coin_cost_per_episode} coins</span>}</TD>
             <TD>
-              {ep.video_url
+              {ep.status === 'processing'
+                ? <span className="text-amber-400 text-xs">Processing {ep.transcode_progress ?? 0}%</span>
+                : ep.status === 'uploaded'
+                ? <span className="text-amber-400 text-xs">Queued</span>
+                : ep.status === 'failed'
+                ? <span className="text-red-400 text-xs" title={ep.video_error}>Failed — open to retry</span>
+                : ep.video_url
                 ? <span className="text-green-400 text-xs">✓ Uploaded</span>
                 : <span className="text-[#5a5a68] text-xs">Not uploaded</span>
               }
             </TD>
-            <TD><AdminBadge label={ep.status} color={statusColor(ep.status) as any} /></TD>
+            <TD><AdminBadge label={ep.status === 'pending' ? 'no video' : ep.status} color={statusColor(ep.status) as any} /></TD>
             <TD>{ep.views > 0 ? `${(ep.views / 1000).toFixed(0)}K` : '—'}</TD>
             <TD>
               <div className="flex items-center gap-1">

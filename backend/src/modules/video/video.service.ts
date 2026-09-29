@@ -122,6 +122,39 @@ export async function retryTranscode(episodeId: string) {
   return { queued: true }
 }
 
+// ── Cleanup when content is deleted ─────────────────────────────────────
+// Best effort: the database rows are already gone, so a storage hiccup is
+// logged rather than failing the delete. An in-flight transcode notices the
+// episode is gone and removes its own output.
+
+async function removeMedia(what: string, work: Promise<unknown>[]) {
+  if (!storageConfigured) return
+  const failed = (await Promise.allSettled(work)).filter(r => r.status === 'rejected')
+  if (failed.length) console.error(`[video] cleanup of ${what} incomplete:`, (failed[0] as PromiseRejectedResult).reason?.message)
+}
+
+const episodeFiles = (id: string) => [
+  deletePrefix(buckets.media, `videos/${id}/`),
+  deletePrefix(buckets.uploads, `raw/${id}/`),
+]
+
+export function deleteEpisodeMedia(episodeId: string) {
+  return removeMedia(`episode ${episodeId}`, episodeFiles(episodeId))
+}
+
+/** A series' images and every episode's video. `imageUrls` covers images uploaded before the series existed ("drafts"). */
+export function deleteSeriesMedia(seriesId: string, episodeIds: string[], imageUrls: (string | null)[]) {
+  const base = publicUrl('')
+  const draftKeys = imageUrls
+    .filter((u): u is string => !!u && u.startsWith(`${base}images/series/drafts/`))
+    .map(u => u.slice(base.length))
+  return removeMedia(`series ${seriesId}`, [
+    deletePrefix(buckets.media, `images/series/${seriesId}/`),
+    ...draftKeys.map(k => deleteObject(buckets.media, k)),
+    ...episodeIds.flatMap(episodeFiles),
+  ])
+}
+
 // ── Processing queue ────────────────────────────────────────────────────
 // The database is the queue: an episode in UPLOADED/PROCESSING state needs
 // work, so jobs survive restarts. One video at a time keeps the API server
