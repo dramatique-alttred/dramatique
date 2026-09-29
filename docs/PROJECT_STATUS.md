@@ -58,6 +58,8 @@ Migrations: `init`, `series_pricing_defaults` (lock point/price + backfill), `ep
 - **Admin uploads** (`src/lib/admin-upload.ts`, `components/admin/ImageUpload.tsx`, `VideoUpload.tsx`): poster/banner picker (drag-drop, straight to R2); episode video uploader (10 MB parts ×4 parallel, per-part retry, cancel → multipart abort, progress → processing % → ready preview / failed + retry). New episode → "Save & Upload Video" lands on its edit page. Duration is read-only once a video exists (FFmpeg measures it)
 - Deleting an episode/series also removes its R2 files (HLS, raw source, images)
 - `apiClient` waits for Firebase to restore the session before sending requests (direct loads of admin pages used to 401)
+- **Video URL protection built, not deployed**: `workers/media` Worker + signed URLs (`backend/src/lib/media-token.ts`). Deploy steps: `workers/media/README.md` (needs `wrangler login` by the user)
+- **Hosting prepared**: `backend/Dockerfile` (Node 22 + FFmpeg), multi-origin CORS, graceful shutdown, GitHub Actions checks. Plan: API on **DigitalOcean App Platform, Bangalore**, website on Vercel. Steps: `docs/DEPLOY.md`
 
 ### Demo content
 *Forbidden CEO* episodes **1, 2 (free) and 7 (locked)** have 30-second demo videos (labelled test pattern) transcoded to HLS on R2.
