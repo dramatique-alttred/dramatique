@@ -30,6 +30,7 @@ Stack: **Next.js 14 + Tailwind** (frontend) · **Express 5 + Prisma** (backend) 
 | **Firebase** | Project `dramatique-5a322`; Anonymous + Google + Email/Password (incl. email link) enabled |
 | **Cloudflare R2** | Account ID `aceb685bd9a6490eab7290db2a1274f9`; `dramatique-media` (public via r2.dev dev URL) + `dramatique-uploads` (private); CORS for `http://localhost:3000`; API token in `backend/.env`. Verify any time: `cd backend && npm run check:r2` |
 | **AWS** | Account "Fresh Deploy" (new Builder Experience), Paid plan, company card, **$20 hard spend limit** + early cost controls. Not used yet |
+| **DigitalOcean** | App `dramatique-api`, Bangalore, 2 GB / 1 container ($25/mo), deploys branch `phase-2-catalog-api` from GitHub. **Live: https://dramatique-api-2ekwx.ondigitalocean.app** (health check `/health`) |
 | Admin user | `dramatix@alttrednexxus.com` has role `ADMIN` in Supabase |
 
 **Secrets live only in** `backend/.env` and `.env.local` (both gitignored). Never commit or paste them.
