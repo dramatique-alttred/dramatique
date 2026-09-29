@@ -2,7 +2,7 @@ import { Prisma, PublishStatus } from '@prisma/client'
 import { prisma } from '../../config/prisma'
 import { HttpError } from '../../lib/http'
 import { LANGUAGE_NAMES } from '../catalog/catalog.service'
-import { publicUrl } from '../../lib/storage'
+import { videoUrl } from '../../lib/media-token'
 import { deleteEpisodeMedia, deleteSeriesMedia } from '../video/video.service'
 import { has, str, int, bool, url, date, SLUG_RE, paging } from './validate'
 
@@ -252,7 +252,7 @@ function toAdminEpisode(e: EpisodeRow) {
     coin_cost: e.coinPrice,
     video_id: e.hlsManifestKey ?? '',
     // Admin preview; viewers go through /playback, which checks access
-    video_url: e.hlsManifestKey ? publicUrl(e.hlsManifestKey) : '',
+    video_url: e.hlsManifestKey ? videoUrl(e.hlsManifestKey) : '',
     subtitles_url: e.subtitlesKey ?? '',
     status: e.videoStatus.toLowerCase(), // video pipeline state: pending/uploaded/processing/ready/failed
     transcode_progress: e.transcodeProgress,

@@ -2,7 +2,7 @@ import { Router, Response, NextFunction } from 'express'
 import { prisma } from '../../config/prisma'
 import { authMiddleware, AuthedRequest } from '../../middleware/auth.middleware'
 import { HttpError, UUID_RE } from '../../lib/http'
-import { publicUrl } from '../../lib/storage'
+import { videoUrl, videoUrlTtlSeconds } from '../../lib/media-token'
 
 /**
  * GET /api/v1/playback/:episodeId
@@ -11,9 +11,9 @@ import { publicUrl } from '../../lib/storage'
  * Free → anyone (guests included); COIN_LOCKED → unlocked or VIP;
  * VIP_ONLY → VIP; admins can preview anything, including drafts.
  *
- * NOTE: until the media custom domain + Cloudflare Worker land, the HLS URL
- * itself is not access-controlled — someone could share it. This endpoint is
- * where the short-lived signed token will be added.
+ * The URL it returns carries a short-lived token scoped to this episode; the
+ * media Worker (workers/media) refuses video requests without one, so a
+ * shared link stops working when the token expires.
  */
 export const playbackRouter = Router()
 playbackRouter.use(authMiddleware)
@@ -49,7 +49,8 @@ playbackRouter.get('/:episodeId', async (req: AuthedRequest, res: Response) => {
   res.set('Cache-Control', 'private, no-store')
   res.json({
     episode_id: ep.id,
-    url: publicUrl(ep.hlsManifestKey),
+    url: videoUrl(ep.hlsManifestKey),
+    url_expires_in_seconds: videoUrlTtlSeconds,
     duration_seconds: ep.durationSeconds,
     resume_position_seconds: progress && !progress.completed ? progress.lastPositionSeconds : 0,
   })
