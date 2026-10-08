@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, MessageCircle, Clock } from 'lucide-react'
+import { Mail, MessageCircle, Clock } from '@/components/ui/icons'
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })

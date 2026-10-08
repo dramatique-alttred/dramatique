@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowRight } from '@/components/ui/icons'
 import SeriesCard, { SeriesCardSkeleton } from './SeriesCard'
 import { Series } from '@/types'
 
@@ -61,7 +61,9 @@ export default function SeriesRow({ title, series, loading = false, subtitle, ki
           </div>
         </button>
 
-        <div ref={ref} className={`scroll-row px-5 md:px-8 ${isRanked ? 'pl-8 md:pl-12' : ''}`}>
+        {/* Same gutter as the header so titles and first cards line up;
+            ranked cards carry their own numeral gutter */}
+        <div ref={ref} className="scroll-row px-5 md:px-8">
           {loading
             ? Array.from({ length: 6 }).map((_, i) => <SeriesCardSkeleton key={i} size={cardSize} />)
             : series.map((s, i) => (

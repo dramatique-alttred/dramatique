@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Loader2, AlertTriangle } from 'lucide-react'
+import { Loader2, AlertTriangle } from '@/components/ui/icons'
 
 interface VideoPlayerProps {
   src: string                 // HLS master playlist

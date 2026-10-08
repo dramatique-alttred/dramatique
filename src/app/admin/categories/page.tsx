@@ -6,7 +6,7 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminBadge, AdminBtn, FormField, Input, Textarea, Select } from '@/components/admin/AdminUI'
 import { useAdminCategories, useAdminSubcategories, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminCategoryApi } from '@/lib/admin-api'
-import { Plus, Edit, Trash2, ChevronDown, ChevronRight, GripVertical, Loader2 } from 'lucide-react'
+import { Plus, Edit, Trash2, ChevronDown, ChevronRight, GripVertical, Loader2 } from '@/components/ui/icons'
 
 const autoSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 

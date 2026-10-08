@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminCard, SectionHeader, FormField, Input, Toggle, AdminBtn } from '@/components/admin/AdminUI'
-import { Plus, Edit, Trash2 } from 'lucide-react'
+import { Plus, Edit, Trash2 } from '@/components/ui/icons'
 
 const INITIAL_COIN_PLANS = [
   { id: 1, name: 'Starter', coins: 30, bonus: 0, price_inr: 89, price_usd: 1.05, badge: '', is_active: true },

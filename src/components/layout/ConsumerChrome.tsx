@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import BottomNav from '@/components/layout/BottomNav'
+import { DailyRewardPrompt } from '@/components/monetisation/DailyReward'
 
 /**
  * Renders the consumer-facing chrome (navbar, footer, mobile bottom nav)
@@ -24,6 +25,7 @@ export default function ConsumerChrome({ children }: { children: React.ReactNode
       {children}
       <Footer />
       <BottomNav />
+      <DailyRewardPrompt />
     </>
   )
 }

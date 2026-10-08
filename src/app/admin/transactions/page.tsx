@@ -4,7 +4,7 @@ import { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminTable, TR, TD, AdminBadge, AdminSearchBar, AdminBtn, StatCard, TableSkeleton } from '@/components/admin/AdminUI'
 import { useAdminTransactions } from '@/hooks/admin/useAdminQueries'
-import { Download } from 'lucide-react'
+import { Download } from '@/components/ui/icons'
 
 export default function TransactionsPage() {
   const [search, setSearch] = useState('')

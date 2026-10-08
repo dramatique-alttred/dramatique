@@ -3,7 +3,7 @@
 import { useSavedList, useContinueWatching } from '@/hooks'
 import SeriesCard from '@/components/series/SeriesCard'
 import EmptyState from '@/components/ui/EmptyState'
-import { BookMarked, Play } from 'lucide-react'
+import { BookMarked, Play } from '@/components/ui/icons'
 
 export default function MyListPage() {
   const { data: saved = [] } = useSavedList()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronRight, Bell, Globe, Shield, Trash2, HelpCircle, FileText } from 'lucide-react'
+import { ChevronRight, Bell, Globe, Shield, Trash2, HelpCircle, FileText } from '@/components/ui/icons'
 import Link from 'next/link'
 import { LANGUAGES } from '@/types'
 

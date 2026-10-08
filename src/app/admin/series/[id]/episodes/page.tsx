@@ -5,7 +5,7 @@ import { AdminPageHeader, AdminTable, TR, TD, AdminBadge, AdminBtn, Toggle, Brea
 import { useAdminSeriesOne, useAdminEpisodes, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminEpisodeApi } from '@/lib/admin-api'
 import { useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit, Trash2, Upload } from 'lucide-react'
+import { Plus, Edit, Trash2, Upload } from '@/components/ui/icons'
 import Link from 'next/link'
 
 function formatDuration(seconds: number) {

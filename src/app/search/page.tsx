@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, X } from 'lucide-react'
+import { Search, X } from '@/components/ui/icons'
 import { useSeriesSearch } from '@/hooks'
 import { GENRES } from '@/types'
 import SeriesCard from '@/components/series/SeriesCard'

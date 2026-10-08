@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight } from '@/components/ui/icons'
 import Link from 'next/link'
 
 // ── PAGE HEADER ──────────────────────────────────────

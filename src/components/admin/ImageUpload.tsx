@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { ImagePlus, Loader2, X, Link2 } from 'lucide-react'
+import { ImagePlus, Loader2, X, Link2 } from '@/components/ui/icons'
 import { uploadImage, IMAGE_TYPES } from '@/lib/admin-upload'
 
 /**

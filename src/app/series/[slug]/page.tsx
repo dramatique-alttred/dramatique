@@ -9,7 +9,21 @@ import VideoPlayer from '@/components/player/VideoPlayer'
 import { playbackApi, PlaybackInfo } from '@/lib/api'
 import { ApiError } from '@/lib/apiClient'
 import { useSeriesDetail, useRecommended, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
-import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star } from 'lucide-react'
+import { useCoinStore } from '@/store'
+import type { Episode } from '@/types'
+import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star } from '@/components/ui/icons'
+
+// Remembered per browser — a viewer who opts in once wants it every binge
+const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
+function useAutoUnlock(): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(false)
+  useEffect(() => { try { setOn(localStorage.getItem(AUTO_UNLOCK_KEY) === '1') } catch { /* storage blocked */ } }, [])
+  const set = (v: boolean) => {
+    setOn(v)
+    try { localStorage.setItem(AUTO_UNLOCK_KEY, v ? '1' : '0') } catch { /* storage blocked */ }
+  }
+  return [on, set]
+}
 
 function EpisodeGrid({ total, isLocked, currentEp, coinCost, onSelect }: { total: number; isLocked: (ep: number) => boolean; currentEp: number; coinCost: number; onSelect: (ep: number) => void }) {
   const BATCH = 50
@@ -64,6 +78,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const toggleSave = useToggleSave()
   const unlock = useUnlockEpisode()
   const saveProgress = useSaveProgress()
+  const balance = useCoinStore(s => s.balance)
 
   const [currentEp, setCurrentEp] = useState(1)
   const [liked, setLiked] = useState(false)
@@ -72,6 +87,8 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const [playback, setPlayback] = useState<PlaybackInfo | null>(null)
   const [notice, setNotice] = useState('')
   const [starting, setStarting] = useState(false)
+  const [justFinished, setJustFinished] = useState(false)
+  const [autoUnlock, setAutoUnlock] = useAutoUnlock()
 
   // Jump to where the user left off — once, when their access info arrives
   const resumed = useRef(false)
@@ -127,7 +144,8 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
     }
   }
 
-  const handleEpSelect = (ep: number) => {
+  const handleEpSelect = (ep: number, fromEnded = false) => {
+    setJustFinished(fromEnded)
     setCurrentEp(ep)
     setPlayback(null)
     setNotice('')
@@ -142,21 +160,30 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
     else startPlayback(currentEpisode.id)
   }
 
-  const handleUnlock = () => {
-    if (!currentEpisode) return
-    const episodeId = currentEpisode.id
+  const unlockAndPlay = (episode: Episode) => {
+    const episodeId = episode.id
     unlock.mutate(
-      { episodeId, coinCost: currentEpisode.coin_price, seriesId: series.id },
+      { episodeId, coinCost: episode.coin_price, seriesId: series.id },
       // Unlocked → straight into the episode
       { onSuccess: () => { setPaywallOpen(false); startPlayback(episodeId) } },
     )
   }
+  const handleUnlock = () => { if (currentEpisode) unlockAndPlay(currentEpisode) }
 
   // The binge loop: episode ends → mark it watched → next episode plays,
   // or the paywall appears if it's locked (the cliffhanger moment)
   const handleEnded = (duration: number) => {
     if (currentEpisode) saveProgress.mutate({ episodeId: currentEpisode.id, positionSeconds: duration, completed: true })
-    if (episodeByNumber.has(currentEp + 1)) handleEpSelect(currentEp + 1)
+    const next = episodeByNumber.get(currentEp + 1)
+    if (!next) return
+    // Auto-unlock: the binge never stops while the viewer can afford it
+    if (autoUnlock && isEpisodeLocked(next.episode_number) && next.access_type === 'COIN_LOCKED' && balance >= next.coin_price) {
+      setCurrentEp(next.episode_number)
+      setPlayback(null)
+      unlockAndPlay(next)
+      return
+    }
+    handleEpSelect(next.episode_number, true)
   }
 
   const isPlaying = !!playback && playback.episode_id === currentEpisode?.id
@@ -214,7 +241,6 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
                       <p className="text-brand-subtle text-sm mb-5 text-center">Unlock to keep watching</p>
                       <div className="flex flex-col gap-2 w-full max-w-[220px]">
                         <button onClick={() => setPaywallOpen(true)} className="btn-primary flex items-center justify-center gap-2">🪙 Use {currentEpisode?.coin_price ?? series.coin_cost_per_episode} Coins</button>
-                        <button onClick={() => setPaywallOpen(true)} className="btn-outline flex items-center justify-center gap-2">📺 Watch 2 Ads Free</button>
                       </div>
                     </div>
                   )}
@@ -299,6 +325,11 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
           episodeNumber={currentEp}
           coinCost={currentEpisode?.coin_price ?? series.coin_cost_per_episode}
           seriesTitle={series.title}
+          posterUrl={currentEpisode?.thumbnail_url || series.thumbnail_url}
+          episodeTitle={currentEpisode?.title}
+          justFinished={justFinished}
+          autoUnlock={autoUnlock}
+          onAutoUnlockChange={setAutoUnlock}
           vipOnly={currentEpisode?.access_type === 'VIP_ONLY'}
           onUnlock={handleUnlock}
           unlocking={unlock.isPending}

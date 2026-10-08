@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check } from '@/components/ui/icons'
 
 const PACKS = [
   { id: 1, coins: 30,   bonus: 0,  price_inr: 89,   price_usd: 1.05, badge: '',           popular: false },

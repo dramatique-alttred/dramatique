@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, BookmarkPlus, Check, ChevronLeft, ChevronRight, Star, Crown } from 'lucide-react'
+import { Play, BookmarkPlus, Check, ChevronLeft, ChevronRight, Star, Crown } from '@/components/ui/icons'
 import { Series } from '@/types'
 
 export default function HeroBanner({ series, loading = false }: { series: Series[]; loading?: boolean }) {
@@ -38,7 +38,7 @@ export default function HeroBanner({ series, loading = false }: { series: Series
       <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />
 
       <div className="absolute inset-0 flex items-end md:items-center">
-        <div className="px-5 md:px-12 pb-24 md:pb-0 max-w-2xl" key={active.id}>
+        <div className="px-5 md:px-8 pb-24 md:pb-0 max-w-2xl" key={active.id}>
           <div className="animate-slide-up">
             <div className="flex items-center gap-2.5 mb-4">
               {active.is_vip && (
@@ -84,7 +84,7 @@ export default function HeroBanner({ series, loading = false }: { series: Series
       </div>
 
       {series.length > 1 && (
-        <div className="absolute bottom-8 md:bottom-10 right-5 md:right-12 flex items-center gap-2 z-10">
+        <div className="absolute bottom-12 md:bottom-24 right-5 md:right-8 flex items-center gap-2 z-10">
           <button onClick={() => setCurrent(p => (p - 1 + series.length) % series.length)} aria-label="Previous" className="w-8 h-8 rounded-full bg-black/40 backdrop-blur border border-white/10 hover:bg-brand-red hover:border-brand-red flex items-center justify-center transition-colors active:scale-90">
             <ChevronLeft size={15} className="text-white" />
           </button>

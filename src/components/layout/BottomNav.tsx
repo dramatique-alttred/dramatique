@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Compass, BookMarked, User } from 'lucide-react'
+import { Home, Compass, BookMarked, User } from '@/components/ui/icons'
 
 const NAV = [
   { href: '/',           icon: Home,       label: 'Home' },
@@ -22,7 +22,7 @@ export default function BottomNav() {
             <Link key={href} href={href} className="relative flex flex-col items-center gap-1 px-5 py-1.5 active:scale-90 transition-transform">
               {/* active indicator dot above the icon */}
               <span className={`absolute -top-1.5 w-1 h-1 rounded-full bg-brand-red transition-all duration-300 ${active ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} />
-              <Icon size={22} className={`transition-colors duration-200 ${active ? 'text-brand-red' : 'text-brand-muted'}`} strokeWidth={active ? 2.5 : 1.8} />
+              <Icon size={22} className={`transition-colors duration-200 ${active ? 'text-brand-red' : 'text-brand-muted'}`} weight={active ? 'fill' : 'regular'} />
               <span className={`text-[10px] font-semibold transition-colors duration-200 ${active ? 'text-brand-red' : 'text-brand-muted'}`}>{label}</span>
             </Link>
           )

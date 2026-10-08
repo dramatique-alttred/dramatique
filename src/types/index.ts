@@ -41,7 +41,9 @@ export interface SeriesAccess {
 export interface DailyRewardStatus {
   claimed_today: boolean;
   streak: number;
-  reward: number;
+  reward: number;          // what today is (or was) worth
+  next_reward: number;     // the next claim — today if unclaimed, else tomorrow
+  schedule: number[];      // 7-day cycle of rewards
 }
 export interface CoinTransaction {
   id: string;
