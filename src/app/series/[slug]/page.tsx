@@ -25,6 +25,39 @@ function useAutoUnlock(): [boolean, (on: boolean) => void] {
   return [on, set]
 }
 
+// Between episodes: a short countdown the viewer can skip or cancel
+const UP_NEXT_SECONDS = 5
+function UpNext({ episode, poster, onPlay, onCancel }: { episode: number; poster: string; onPlay: () => void; onCancel: () => void }) {
+  const [left, setLeft] = useState(UP_NEXT_SECONDS)
+  const onPlayRef = useRef(onPlay)
+  onPlayRef.current = onPlay
+  useEffect(() => {
+    if (left <= 0) { onPlayRef.current(); return }
+    const t = setTimeout(() => setLeft(l => l - 1), 1000)
+    return () => clearTimeout(t)
+  }, [left])
+  const R = 26, C = 2 * Math.PI * R
+  return (
+    <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center px-8 text-center animate-fade-in">
+      <div className="relative w-28 aspect-[2/3] rounded-xl overflow-hidden mb-4 ring-1 ring-white/10">
+        <Image src={poster} alt="" fill sizes="112px" className="object-cover" />
+      </div>
+      <p className="text-brand-subtle text-[11px] uppercase tracking-widest font-semibold">Up next</p>
+      <h3 className="text-white font-bold text-xl mb-5">Episode {episode}</h3>
+      <button onClick={onPlay} aria-label={`Play episode ${episode} now`} className="relative w-16 h-16 mb-4 active:scale-90 transition-transform">
+        <svg viewBox="0 0 60 60" className="absolute inset-0 -rotate-90">
+          <circle cx="30" cy="30" r={R} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
+          <circle cx="30" cy="30" r={R} fill="none" stroke="#E8001D" strokeWidth="3" strokeLinecap="round"
+            strokeDasharray={C} strokeDashoffset={C * (left / UP_NEXT_SECONDS)} className="transition-[stroke-dashoffset] duration-1000 ease-linear" />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center"><Play size={24} fill="white" className="text-white ml-0.5" /></span>
+      </button>
+      <p className="text-white/70 text-xs mb-3">Playing in {left}s</p>
+      <button onClick={onCancel} className="text-brand-subtle hover:text-white text-sm font-semibold">Cancel</button>
+    </div>
+  )
+}
+
 function EpisodeGrid({ total, isLocked, currentEp, coinCost, onSelect }: { total: number; isLocked: (ep: number) => boolean; currentEp: number; coinCost: number; onSelect: (ep: number) => void }) {
   const BATCH = 50
   const batches = Math.ceil(total / BATCH)
@@ -88,6 +121,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const [notice, setNotice] = useState('')
   const [starting, setStarting] = useState(false)
   const [justFinished, setJustFinished] = useState(false)
+  const [upNext, setUpNext] = useState<number | null>(null)
   const [autoUnlock, setAutoUnlock] = useAutoUnlock()
 
   // Jump to where the user left off — once, when their access info arrives
@@ -145,6 +179,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   }
 
   const handleEpSelect = (ep: number, fromEnded = false) => {
+    setUpNext(null)
     setJustFinished(fromEnded)
     setCurrentEp(ep)
     setPlayback(null)
@@ -183,7 +218,9 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
       unlockAndPlay(next)
       return
     }
-    handleEpSelect(next.episode_number, true)
+    // Locked → the cliffhanger paywall right away; open → a short "up next" beat
+    if (isEpisodeLocked(next.episode_number)) handleEpSelect(next.episode_number, true)
+    else setUpNext(next.episode_number)
   }
 
   const isPlaying = !!playback && playback.episode_id === currentEpisode?.id
@@ -245,6 +282,16 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
                     </div>
                   )}
                 </>
+              )}
+
+              {upNext !== null && (
+                <UpNext
+                  key={upNext}
+                  episode={upNext}
+                  poster={episodeByNumber.get(upNext)?.thumbnail_url || series.thumbnail_url}
+                  onPlay={() => handleEpSelect(upNext)}
+                  onCancel={() => setUpNext(null)}
+                />
               )}
 
               <div className="absolute top-3 right-3 bg-black/60 backdrop-blur text-white text-xs font-bold px-2.5 py-1 rounded-full">

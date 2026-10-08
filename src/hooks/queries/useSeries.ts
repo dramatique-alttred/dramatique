@@ -1,5 +1,6 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { seriesApi } from '@/lib/api'
+import { seriesApi, playbackApi } from '@/lib/api'
 import { useAuthStore } from '@/store'
 
 // Query keys — centralised to avoid typos and enable precise invalidation
@@ -7,6 +8,7 @@ export const seriesKeys = {
   all: ['series'] as const,
   feed: () => [...seriesKeys.all, 'feed'] as const,
   hero: () => [...seriesKeys.all, 'hero'] as const,
+  swipe: () => [...seriesKeys.all, 'swipe'] as const,
   detail: (slug: string) => [...seriesKeys.all, 'detail', slug] as const,
   search: (query: string) => [...seriesKeys.all, 'search', query] as const,
   byGenre: (genre: string) => [...seriesKeys.all, 'genre', genre] as const,
@@ -28,6 +30,33 @@ export function useHeroSeries() {
     queryKey: seriesKeys.hero(),
     queryFn: seriesApi.getHero,
     staleTime: 10 * 60 * 1000, // 10 minutes
+  })
+}
+
+// ── SWIPE FEED ──────────────────────────────────────────
+export function useSwipeFeed() {
+  return useQuery({
+    queryKey: seriesKeys.swipe(),
+    queryFn: seriesApi.getSwipe,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// First playable free episode of a series, for muted previews (reuses the swipe feed)
+export function usePreviewEpisode(seriesId: string | undefined) {
+  const { data } = useSwipeFeed()
+  return useMemo(() => data?.find(i => i.series.id === seriesId)?.episode ?? null, [data, seriesId])
+}
+
+// ── PLAYBACK TICKET ──────────────────────────────────────────
+// Tickets live 2 h, so a cached one is safe to reuse for a good while
+export function usePlaybackTicket(episodeId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['playback', episodeId],
+    queryFn: () => playbackApi.get(episodeId!),
+    enabled: useAuthStore(s => s.sessionReady) && !!episodeId && enabled,
+    staleTime: 90 * 60 * 1000,
+    retry: 1,
   })
 }
 

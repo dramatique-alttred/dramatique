@@ -12,6 +12,12 @@ export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
+  // Arriving from the navbar's "See all results" — start with that query
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('q')
+    if (q) setQuery(q)
+  }, [])
+
   // Wait for a pause in typing before hitting the server
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 250)

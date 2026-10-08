@@ -21,6 +21,11 @@ export interface Episode {
   access_type: 'FREE' | 'COIN_LOCKED' | 'VIP_ONLY';
   coin_price: number;
 }
+// Vertical swipe feed: a series opening on its first free episode (null until video is uploaded)
+export interface SwipeItem {
+  series: Series;
+  episode: Episode | null;
+}
 // Series detail endpoint also returns the live episode list
 export interface SeriesDetail extends Series {
   episodes: Episode[];

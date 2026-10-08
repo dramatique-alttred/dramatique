@@ -3,24 +3,51 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, BookmarkPlus, Check, ChevronLeft, ChevronRight, Star, Crown } from '@/components/ui/icons'
+import { Play, BookmarkPlus, Check, ChevronLeft, ChevronRight, Star, Crown, Volume2, VolumeX } from '@/components/ui/icons'
+import VideoPlayer from '@/components/player/VideoPlayer'
+import { usePreviewEpisode, usePlaybackTicket, useSavedIds, useToggleSave } from '@/hooks'
+import { canAutoPreview } from '@/lib/preview'
 import { Series } from '@/types'
+
+const SLIDE_MS = 7000
+const PREVIEW_DELAY_MS = 2500
 
 export default function HeroBanner({ series, loading = false }: { series: Series[]; loading?: boolean }) {
   const [current, setCurrent] = useState(0)
-  const [saved, setSaved] = useState(false)
+  const [previewing, setPreviewing] = useState(false)   // preview mounted
+  const [previewShown, setPreviewShown] = useState(false) // first frame is playing
+  const [muted, setMuted] = useState(true)
+  const [allowPreview, setAllowPreview] = useState(false)
+  const { data: savedIds = [] } = useSavedIds()
+  const toggleSave = useToggleSave()
 
+  const active = series[current] as Series | undefined
+  const preview = usePreviewEpisode(active?.id)
+  const { data: ticket } = usePlaybackTicket(preview?.id, allowPreview && !!preview)
+
+  useEffect(() => { setAllowPreview(canAutoPreview()) }, [])
+
+  // New slide: drop the old preview, then start this one after a beat
   useEffect(() => {
-    if (series.length <= 1) return
-    const t = setInterval(() => setCurrent(p => (p + 1) % series.length), 7000)
-    return () => clearInterval(t)
-  }, [series.length])
+    setPreviewing(false)
+    setPreviewShown(false)
+    if (!allowPreview || !ticket) return
+    const t = setTimeout(() => setPreviewing(true), PREVIEW_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [current, ticket, allowPreview])
+
+  // Rotate slides — but never cut a preview off mid-play; it advances when it ends
+  useEffect(() => {
+    if (series.length <= 1 || previewing) return
+    const t = setTimeout(() => setCurrent(p => (p + 1) % series.length), SLIDE_MS)
+    return () => clearTimeout(t)
+  }, [series.length, current, previewing])
 
   if (loading) {
     return <div className="relative w-full h-[68vh] sm:h-[74vh] md:h-[86vh] skeleton" />
   }
-  if (!series.length) return null
-  const active = series[current]
+  if (!series.length || !active) return null
+  const saved = savedIds.includes(active.id)
 
   return (
     <div className="relative w-full h-[68vh] sm:h-[74vh] md:h-[86vh] overflow-hidden">
@@ -32,13 +59,29 @@ export default function HeroBanner({ series, loading = false }: { series: Series
         </div>
       ))}
 
+      {/* Muted preview of episode 1 — full-bleed on phones, a 9:16 frame on desktop */}
+      {previewing && ticket && (
+        <div className={`absolute inset-0 md:inset-auto md:right-[8%] md:top-1/2 md:-translate-y-1/2 md:h-[62%] md:aspect-[9/16] md:rounded-2xl md:overflow-hidden md:ring-1 md:ring-white/15 md:shadow-2xl md:z-[1] transition-opacity duration-700 ${previewShown ? 'opacity-100' : 'opacity-0'}`}>
+          <VideoPlayer
+            key={ticket.episode_id}
+            src={ticket.url}
+            controls={false}
+            muted={muted}
+            fit="cover"
+            quiet
+            onPlaying={() => setPreviewShown(true)}
+            onEnded={() => setCurrent(p => (p + 1) % series.length)}
+          />
+        </div>
+      )}
+
       {/* Layered cinematic gradients — deeper, moodier */}
       <div className="absolute inset-0 cine-fade-r" />
       <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/30 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />
 
-      <div className="absolute inset-0 flex items-end md:items-center">
-        <div className="px-5 md:px-8 pb-24 md:pb-0 max-w-2xl" key={active.id}>
+      <div className="absolute inset-0 z-[2] flex items-end md:items-center pointer-events-none">
+        <div className="px-5 md:px-8 pb-24 md:pb-0 max-w-2xl pointer-events-auto" key={active.id}>
           <div className="animate-slide-up">
             <div className="flex items-center gap-2.5 mb-4">
               {active.is_vip && (
@@ -63,7 +106,7 @@ export default function HeroBanner({ series, loading = false }: { series: Series
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-6 text-brand-subtle text-xs font-medium">
               <span>{active.total_episodes} Episodes</span>
               <span className="w-1 h-1 rounded-full bg-brand-muted" />
-              <span className="text-green-400">Free through Ep {active.lock_from_episode - 1}</span>
+              <span className="text-green-400">{active.lock_from_episode > 1 ? `Free through Ep ${active.lock_from_episode - 1}` : 'Unlock with coins'}</span>
               <span className="w-1 h-1 rounded-full bg-brand-muted" />
               <span>{active.language}</span>
             </div>
@@ -73,11 +116,21 @@ export default function HeroBanner({ series, loading = false }: { series: Series
                 <Play size={17} fill="white" /> Watch Free
               </Link>
               <button
-                onClick={() => setSaved(!saved)}
+                onClick={() => toggleSave.mutate(active.id)}
+                disabled={toggleSave.isPending}
                 className={`flex items-center gap-2 border font-semibold px-6 py-3.5 rounded-xl transition-all duration-200 text-sm backdrop-blur-sm active:scale-[0.97] ${saved ? 'border-brand-red text-white bg-brand-red/15' : 'border-white/20 text-white bg-white/5 hover:bg-white/10 hover:border-white/30'}`}
               >
                 {saved ? <><Check size={16} /> Saved</> : <><BookmarkPlus size={16} /> My List</>}
               </button>
+              {previewShown && (
+                <button
+                  onClick={() => setMuted(m => !m)}
+                  aria-label={muted ? 'Unmute preview' : 'Mute preview'}
+                  className="w-12 h-12 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm flex items-center justify-center text-white transition-colors animate-fade-in"
+                >
+                  {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                </button>
+              )}
             </div>
           </div>
         </div>

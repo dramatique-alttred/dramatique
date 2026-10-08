@@ -48,6 +48,12 @@ export async function listSeries(req: Request, res: Response) {
   }))
 }
 
+/** GET /api/v1/catalog/swipe?limit= — vertical swipe feed */
+export async function getSwipe(req: Request, res: Response) {
+  cachePublic(res)
+  res.json(await catalog.getSwipeFeed(clampLimit(req.query.limit, 30, 50)))
+}
+
 /** GET /api/v1/catalog/series/:slug */
 export async function getSeries(req: Request<{ slug: string }>, res: Response) {
   const series = await catalog.getSeriesBySlug(req.params.slug)

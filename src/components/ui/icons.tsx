@@ -50,6 +50,7 @@ import { LockIcon } from '@phosphor-icons/react/dist/csr/Lock'
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass'
 import { MinusIcon } from '@phosphor-icons/react/dist/csr/Minus'
 import { MonitorIcon } from '@phosphor-icons/react/dist/csr/Monitor'
+import { PauseIcon } from '@phosphor-icons/react/dist/csr/Pause'
 import { PaperPlaneRightIcon } from '@phosphor-icons/react/dist/csr/PaperPlaneRight'
 import { PencilSimpleIcon } from '@phosphor-icons/react/dist/csr/PencilSimple'
 import { PhoneIcon } from '@phosphor-icons/react/dist/csr/Phone'
@@ -64,6 +65,8 @@ import { SignInIcon } from '@phosphor-icons/react/dist/csr/SignIn'
 import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut'
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle'
 import { SquaresFourIcon } from '@phosphor-icons/react/dist/csr/SquaresFour'
+import { SpeakerSimpleHighIcon } from '@phosphor-icons/react/dist/csr/SpeakerSimpleHigh'
+import { SpeakerSimpleSlashIcon } from '@phosphor-icons/react/dist/csr/SpeakerSimpleSlash'
 import { StarIcon } from '@phosphor-icons/react/dist/csr/Star'
 import { TagIcon } from '@phosphor-icons/react/dist/csr/Tag'
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash'
@@ -144,6 +147,7 @@ export const Menu = make(ListIcon, 'Menu')
 export const MessageCircle = make(ChatCircleIcon, 'MessageCircle')
 export const Minus = make(MinusIcon, 'Minus')
 export const Monitor = make(MonitorIcon, 'Monitor')
+export const Pause = make(PauseIcon, 'Pause')
 export const Phone = make(PhoneIcon, 'Phone')
 export const Play = make(PlayIcon, 'Play')
 export const Plus = make(PlusIcon, 'Plus')
@@ -163,5 +167,7 @@ export const Trash2 = make(TrashIcon, 'Trash2')
 export const TrendingUp = make(TrendUpIcon, 'TrendingUp')
 export const Upload = make(UploadSimpleIcon, 'Upload')
 export const User = make(UserIcon, 'User')
+export const Volume2 = make(SpeakerSimpleHighIcon, 'Volume2')
+export const VolumeX = make(SpeakerSimpleSlashIcon, 'VolumeX')
 export const Users = make(UsersIcon, 'Users')
 export const X = make(XIcon, 'X')

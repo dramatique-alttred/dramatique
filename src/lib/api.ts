@@ -11,7 +11,7 @@
  */
 
 import { apiClient } from './apiClient'
-import { Series, SeriesDetail, FeedSection, GenreCategory, WatchedSeries, SeriesAccess, DailyRewardStatus, CoinTransaction } from '@/types'
+import { Series, SeriesDetail, FeedSection, GenreCategory, WatchedSeries, SeriesAccess, DailyRewardStatus, CoinTransaction, SwipeItem } from '@/types'
 
 // ── SERIES ──────────────────────────────────────────────
 const qs = (params: Record<string, string | number | undefined>) => {
@@ -25,6 +25,7 @@ export const seriesApi = {
   getFeed: (): Promise<FeedSection[]> => apiClient.get('/catalog/feed'),
 
   getHero: (): Promise<Series[]> => apiClient.get('/catalog/hero'),
+  getSwipe: (): Promise<SwipeItem[]> => apiClient.get('/catalog/swipe'),
 
   getContinueWatching: (): Promise<WatchedSeries[]> => apiClient.get('/me/continue-watching'),
 
