@@ -1,6 +1,6 @@
 'use client'
 
-import { Receipt } from 'lucide-react'
+import { Receipt } from '@/components/ui/icons'
 import { useTransactions } from '@/hooks'
 import EmptyState from '@/components/ui/EmptyState'
 import type { CoinTransaction } from '@/types'

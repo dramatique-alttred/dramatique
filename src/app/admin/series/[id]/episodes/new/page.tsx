@@ -7,7 +7,7 @@ import { AdminPageHeader, FormField, Input, Select, Toggle, AdminBtn, AdminCard,
 import { useAdminSeriesOne, useAdminEpisodes, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminEpisodeApi } from '@/lib/admin-api'
 import { useQueryClient } from '@tanstack/react-query'
-import { Save, Film, Loader2 } from 'lucide-react'
+import { Save, Film, Loader2 } from '@/components/ui/icons'
 
 export default function AddEpisodePage({ params }: { params: { id: string } }) {
   const router = useRouter()

@@ -8,7 +8,7 @@ import { AdminPageHeader, FormField, Input, Toggle, AdminBtn, AdminCard, Breadcr
 import VideoUpload from '@/components/admin/VideoUpload'
 import { useAdminSeriesOne, useAdminEpisodeOne, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminEpisodeApi } from '@/lib/admin-api'
-import { Save, Loader2, Trash2 } from 'lucide-react'
+import { Save, Loader2, Trash2 } from '@/components/ui/icons'
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60)

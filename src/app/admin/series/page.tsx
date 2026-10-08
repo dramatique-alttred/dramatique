@@ -4,7 +4,7 @@ import { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminTable, TR, TD, AdminBadge, AdminSearchBar, AdminBtn, SectionHeader, TableSkeleton } from '@/components/admin/AdminUI'
 import { useAdminSeries } from '@/hooks/admin/useAdminQueries'
-import { Plus, Edit, Eye, Trash2, Copy } from 'lucide-react'
+import { Plus, Edit, Eye, Trash2, Copy } from '@/components/ui/icons'
 import Link from 'next/link'
 
 export default function SeriesManagerPage() {

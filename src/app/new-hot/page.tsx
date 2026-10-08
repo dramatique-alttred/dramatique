@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAllSeries } from '@/hooks'
 import SeriesCard from '@/components/series/SeriesCard'
-import { Flame, Sparkles, TrendingUp, Star } from 'lucide-react'
+import { Flame, Sparkles, TrendingUp, Star } from '@/components/ui/icons'
 
 const TABS = [
   { id: 'trending',  label: 'Trending',     icon: Flame },

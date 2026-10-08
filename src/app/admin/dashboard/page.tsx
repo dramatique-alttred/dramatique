@@ -3,7 +3,7 @@
 import AdminLayout from '@/components/admin/AdminLayout'
 import { StatCard, StatCardSkeleton, AdminCard, SectionHeader, AdminBadge, AdminBtn, AdminSkeleton } from '@/components/admin/AdminUI'
 import { useAdminDashboard, useAdminTransactions, useAdminUsers } from '@/hooks/admin/useAdminQueries'
-import { Plus } from 'lucide-react'
+import { Plus } from '@/components/ui/icons'
 
 export default function AdminDashboard() {
   const { stats: statsQ, chart: chartQ, top: topQ } = useAdminDashboard()

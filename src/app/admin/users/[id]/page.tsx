@@ -6,7 +6,7 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminCard, SectionHeader, AdminBadge, AdminBtn, Breadcrumb, FormField, Input, Select, AdminSkeleton } from '@/components/admin/AdminUI'
 import { useAdminUserOne, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminUserApi } from '@/lib/admin-api'
-import { Coins, Crown, Ban, Plus, Minus, Clock, Gift, Loader2 } from 'lucide-react'
+import { Coins, Crown, Ban, Plus, Minus, Clock, Gift, Loader2 } from '@/components/ui/icons'
 
 const VIP_DURATIONS = [
   { label: '1 Month', days: 30 },

@@ -1,4 +1,4 @@
-import { Smartphone, Monitor, Globe } from 'lucide-react'
+import { Smartphone, Monitor, Globe } from '@/components/ui/icons'
 
 const FEATURES = [
   { icon: '📺', title: 'Watch Anywhere', desc: 'Stream on your phone, tablet, or desktop' },

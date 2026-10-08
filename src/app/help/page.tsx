@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, Search } from '@/components/ui/icons'
 
 const FAQS = [
   { q: 'How do I watch episodes for free?', a: 'The first 2 episodes of every series are completely free — no account or coins needed. Just tap Watch and enjoy. From episode 3 onwards, you can unlock using coins or by watching 2 short ads.' },

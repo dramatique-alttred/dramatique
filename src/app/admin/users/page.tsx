@@ -4,7 +4,7 @@ import { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminTable, TR, TD, AdminBadge, AdminSearchBar, AdminBtn, TableSkeleton } from '@/components/admin/AdminUI'
 import { useAdminUsers } from '@/hooks/admin/useAdminQueries'
-import { Eye, Coins, Crown, Ban } from 'lucide-react'
+import { Eye, Coins, Crown, Ban } from '@/components/ui/icons'
 import Link from 'next/link'
 
 export default function UserManagerPage() {

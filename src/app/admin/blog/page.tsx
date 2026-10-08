@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminTable, TR, TD, AdminBadge, AdminSearchBar, AdminBtn } from '@/components/admin/AdminUI'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye } from '@/components/ui/icons'
 import Link from 'next/link'
 
 const MOCK_POSTS = [

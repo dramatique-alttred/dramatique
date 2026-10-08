@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, createContext, useContext, useCallback } from 'react'
-import { X, CheckCircle, AlertCircle, Info } from 'lucide-react'
+import { X, CheckCircle, AlertCircle, Info } from '@/components/ui/icons'
 
 type ToastType = 'success' | 'error' | 'info'
 interface Toast { id: string; message: string; type: ToastType }

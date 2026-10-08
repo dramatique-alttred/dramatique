@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminCard, SectionHeader, FormField, Input, Toggle, AdminBtn } from '@/components/admin/AdminUI'
 import { adminSettingsApi } from '@/lib/admin-api'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2 } from '@/components/ui/icons'
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<any>(null)

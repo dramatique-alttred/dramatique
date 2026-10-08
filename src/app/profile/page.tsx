@@ -6,12 +6,13 @@ import {
   Coins, Crown, History, BookMarked,
   Gift, Settings, LogOut, ChevronRight,
   Share2, Copy, Check
-} from 'lucide-react'
+} from '@/components/ui/icons'
 import LoginModal from '@/components/ui/LoginModal'
 import { useAuthStore } from '@/store/authStore'
 import { useCoinStore } from '@/store/coinStore'
 import { signOut } from '@/lib/auth'
 import { useDailyReward, useClaimReward } from '@/hooks'
+import { DailyRewardStrip } from '@/components/monetisation/DailyReward'
 
 const COIN_PACKS = [
   { coins: 30,   price: '₹89',    badge: '' },
@@ -36,11 +37,9 @@ export default function ProfilePage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // 7-day strip: days already checked in this week, then today's slot
   const streak = reward?.streak ?? 0
   const claimedToday = !!reward?.claimed_today
   const rewardCoins = reward?.reward ?? 5
-  const filledDays = claimedToday ? ((streak - 1) % 7) + 1 : streak % 7
 
   if (!isLoggedIn) {
     return (
@@ -131,21 +130,10 @@ export default function ProfilePage() {
             </div>
             {streak > 0 && <span className="text-brand-subtle text-xs">🔥 {streak} day streak</span>}
           </div>
-          <div className="grid grid-cols-7 gap-1.5 mb-3">
-            {Array.from({ length: 7 }, (_, i) => {
-              const done = i < filledDays
-              const today = !claimedToday && i === filledDays
-              return (
-                <div key={i} className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[9px] font-bold ${done ? 'bg-brand-red/20 border border-brand-red/40 text-brand-red' : today ? 'bg-brand-red border border-brand-red text-white' : 'bg-brand-dark border border-brand-border text-brand-muted'}`}>
-                  <span>{done ? '✓' : '🪙'}</span>
-                  <span className="mt-0.5">{done ? '' : `+${rewardCoins}`}</span>
-                </div>
-              )
-            })}
-          </div>
+          <div className="mb-3"><DailyRewardStrip reward={reward} /></div>
           <button onClick={() => claimReward.mutate()} disabled={claimedToday || claimReward.isPending || !reward}
             className={`w-full py-2.5 rounded-xl font-bold text-sm transition-colors ${claimedToday ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'btn-primary disabled:opacity-60'}`}>
-            {claimedToday ? `✅ Claimed Today — +${rewardCoins} Coins` : claimReward.isPending ? 'Claiming…' : `Claim +${rewardCoins} Coins Today`}
+            {claimedToday ? `✅ Claimed Today — +${rewardCoins} Coins · Tomorrow +${reward?.next_reward ?? ''}` : claimReward.isPending ? 'Claiming…' : `Claim +${rewardCoins} Coins Today`}
           </button>
         </div>
 

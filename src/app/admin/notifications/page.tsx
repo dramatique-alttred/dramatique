@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { AdminPageHeader, AdminCard, FormField, Input, Textarea, Select, AdminBtn, SectionHeader } from '@/components/admin/AdminUI'
 import { adminNotificationApi } from '@/lib/admin-api'
-import { Send, Bell, Loader2 } from 'lucide-react'
+import { Send, Bell, Loader2 } from '@/components/ui/icons'
 
 export default function NotificationsPage() {
   const [form, setForm] = useState({ title: '', body: '', target: 'all', deep_link: '' })

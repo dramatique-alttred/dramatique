@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Phone, Mail, ChevronLeft, Loader2, Clock, MailCheck } from 'lucide-react'
+import { X, Phone, Mail, ChevronLeft, Loader2, Clock, MailCheck } from '@/components/ui/icons'
 import { signInWithEmail, signInWithGoogle } from '@/lib/auth'
 
 interface LoginModalProps {

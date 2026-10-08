@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, Globe, Smartphone, LogIn, ChevronDown, X, Menu, Check } from 'lucide-react'
+import { Search, Globe, Smartphone, LogIn, ChevronDown, X, Menu, Check } from '@/components/ui/icons'
 import { LANGUAGES, GENRES } from '@/types'
 import LoginModal from '@/components/ui/LoginModal'
 import { useAuthStore } from '@/store/authStore'
 import { signOut } from '@/lib/auth'
+import { DailyRewardButton } from '@/components/monetisation/DailyReward'
 
 function LanguageDropdown() {
   const [open, setOpen] = useState(false)
@@ -136,7 +137,7 @@ export default function Navbar() {
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-brand-black/95 backdrop-blur-md border-b border-brand-border' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
-        <div className="max-w-[1400px] mx-auto px-5 md:px-8">
+        <div className="px-5 md:px-8">
           <div className="flex items-center gap-6 h-16">
             <Logo />
             <nav className="hidden md:flex items-center gap-6 flex-1">
@@ -148,6 +149,7 @@ export default function Navbar() {
               <button onClick={() => setSearchOpen(true)} className="p-2 text-white hover:text-brand-red transition-colors rounded-lg hover:bg-brand-card">
                 <Search size={18} className="text-white" />
               </button>
+              <DailyRewardButton onSignIn={() => setLoginOpen(true)} />
               <div className="hidden md:block"><LanguageDropdown /></div>
               <Link href="/download" className="hidden lg:flex items-center gap-1.5 bg-white text-black hover:bg-gray-100 font-bold px-5 py-2 rounded-md transition-colors text-sm">
                 <Smartphone size={14} /> Download App

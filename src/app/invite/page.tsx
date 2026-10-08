@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, Share2, Gift } from 'lucide-react'
+import { Copy, Check, Share2, Gift } from '@/components/ui/icons'
 
 const STEPS = [
   { icon: '📲', title: 'Share your link', desc: 'Send your unique invite link to friends' },

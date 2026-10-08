@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Crown, Check } from 'lucide-react'
+import { Crown, Check } from '@/components/ui/icons'
 
 const PERKS = [
   'Unlimited episodes — no coins needed',

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft } from '@/components/ui/icons'
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
   return (

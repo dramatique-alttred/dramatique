@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Film, Upload, Loader2, RotateCcw, X, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Film, Upload, Loader2, RotateCcw, X, CheckCircle2, AlertTriangle } from '@/components/ui/icons'
 import { adminEpisodeApi } from '@/lib/admin-api'
 import { uploadEpisodeVideo, UploadCancelled, VIDEO_ACCEPT } from '@/lib/admin-upload'
 

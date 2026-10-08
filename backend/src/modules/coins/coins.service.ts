@@ -87,27 +87,50 @@ function istDate(offsetDays = 0): Date {
   return new Date(`${ymd}T00:00:00Z`)
 }
 
+// Rewards grow across a 7-day cycle (× the admin's base reward) so coming
+// back tomorrow is always worth more than skipping; day 7 is the big one
+const STREAK_MULTIPLIERS = [1, 1, 2, 2, 3, 3, 6]
+
+function rewardSchedule(base: number): number[] {
+  return STREAK_MULTIPLIERS.map(m => m * base)
+}
+
+/** Coins paid for the check-in that makes the streak `streak` days long (1-based) */
+function rewardForStreak(base: number, streak: number): number {
+  return rewardSchedule(base)[(streak - 1) % STREAK_MULTIPLIERS.length]
+}
+
 export async function getDailyRewardStatus(userId: string) {
-  const [today, latest, reward] = await Promise.all([
+  const [today, latest, base] = await Promise.all([
     prisma.dailyCheckIn.findUnique({ where: { userId_checkInDate: { userId, checkInDate: istDate() } } }),
     prisma.dailyCheckIn.findFirst({ where: { userId }, orderBy: { checkInDate: 'desc' } }),
     getNumberSetting('coins.daily_reward', 5),
   ])
   // Streak survives only if the last check-in was today or yesterday
   const alive = latest && latest.checkInDate.getTime() >= istDate(-1).getTime()
-  return { claimed_today: !!today, streak: alive ? latest!.streak : 0, reward }
+  const streak = alive ? latest!.streak : 0
+  // The next claim (today's if unclaimed, otherwise tomorrow's) extends the streak by one
+  const nextReward = rewardForStreak(base, streak + 1)
+  return {
+    claimed_today: !!today,
+    streak,
+    reward: today ? today.coinsAwarded : nextReward, // what today is (or was) worth
+    next_reward: nextReward,
+    schedule: rewardSchedule(base),
+  }
 }
 
 export async function claimDailyReward(user: { id: string; isGuest: boolean }) {
   // Guests are free to create, so free coins would be farmable — require an account
   if (user.isGuest) throw new HttpError(403, 'Sign in to claim daily rewards', { code: 'ACCOUNT_REQUIRED' })
 
-  const reward = await getNumberSetting('coins.daily_reward', 5)
+  const base = await getNumberSetting('coins.daily_reward', 5)
   const today = istDate()
   const yesterday = await prisma.dailyCheckIn.findUnique({
     where: { userId_checkInDate: { userId: user.id, checkInDate: istDate(-1) } },
   })
   const streak = (yesterday?.streak ?? 0) + 1
+  const reward = rewardForStreak(base, streak)
 
   try {
     const balance = await prisma.$transaction(async tx => {

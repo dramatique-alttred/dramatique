@@ -2,7 +2,7 @@
 
 import { useWatchHistory, useClearHistory } from '@/hooks'
 import EmptyState from '@/components/ui/EmptyState'
-import { History, Play, Trash2 } from 'lucide-react'
+import { History, Play, Trash2 } from '@/components/ui/icons'
 
 function timeAgo(iso?: string): string {
   if (!iso) return ''

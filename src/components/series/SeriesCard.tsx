@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, Bookmark, Share2, Star, Eye, Lock, Crown, Flame, Check } from 'lucide-react'
+import { Play, Bookmark, Share2, Star, Eye, Lock, Crown, Flame, Check } from '@/components/ui/icons'
 import { Series } from '@/types'
 
 function fmt(v: number) {
@@ -29,6 +29,7 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
 
   const w = WIDTHS[size]
   const hasProgress = typeof series.progress === 'number' && series.progress > 0
+  const ranked = rank !== undefined
 
   return (
     <div
@@ -56,10 +57,13 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
           {/* Permanent cinematic base gradient — grounds text, adds depth */}
           <div className="absolute inset-0 cine-fade opacity-80" />
 
-          {/* Rank number for ranked rails (Top 10 style) */}
-          {rank !== undefined && (
-            <span className="absolute -left-1 bottom-1 font-display text-white/90 leading-none pointer-events-none"
-              style={{ fontSize: size === 'lg' ? '4.5rem' : '3.5rem', WebkitTextStroke: '2px rgba(232,0,29,0.9)' }}>
+          {/* Rank numeral (Top 10 style) — inside the poster, clear of its edges */}
+          {ranked && (
+            <span
+              className="absolute left-2.5 bottom-2 font-display leading-[0.8] text-white pointer-events-none select-none"
+              style={{ fontSize: size === 'lg' ? '4rem' : '3.25rem', WebkitTextStroke: '2px rgba(232,0,29,0.95)', textShadow: '0 4px 14px rgba(0,0,0,0.7)' }}
+              aria-hidden
+            >
               {rank}
             </span>
           )}
@@ -87,7 +91,7 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
           )}
 
           {/* Bottom meta: views (or rating) sitting on the gradient */}
-          {rank === undefined && (
+          {!ranked && (
             <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
               {series.views ? (
                 <span className="flex items-center gap-1 text-white/75 text-[10px] font-medium">

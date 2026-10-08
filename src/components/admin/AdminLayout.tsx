@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Film, Play, Users, Coins, Crown,
   FileText, Bell, Settings, BarChart3, Tag, LogOut,
   Menu, X, ChevronRight, ChevronDown
-} from 'lucide-react'
+} from '@/components/ui/icons'
 import { onAuthStateChanged } from 'firebase/auth'
 import { firebaseAuth } from '@/lib/firebase'
 import { fetchProfile, signOut } from '@/lib/auth'

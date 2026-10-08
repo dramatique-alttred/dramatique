@@ -7,7 +7,7 @@ import ImageUpload from '@/components/admin/ImageUpload'
 import { AdminPageHeader, FormField, Input, Select, Textarea, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
 import { useAdminCategories, useAdminSubcategories } from '@/hooks/admin/useAdminQueries'
 import { adminSeriesApi } from '@/lib/admin-api'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2 } from '@/components/ui/icons'
 
 // <input type="datetime-local"> works in local time without a timezone;
 // the API wants ISO. Convert both ways.
