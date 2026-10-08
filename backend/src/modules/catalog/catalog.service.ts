@@ -229,6 +229,53 @@ export async function getSeriesBySlug(slug: string): Promise<(SeriesDto & { epis
   }
 }
 
+export interface SwipeItemDto {
+  series: SeriesDto
+  /** First free episode with a playable video — null while none is uploaded yet */
+  episode: EpisodeDto | null
+}
+
+/**
+ * The vertical swipe feed: one card per live series, opening on its first
+ * free episode. Titles with video ready come first so the feed starts
+ * playing immediately; the rest show their poster until video lands.
+ */
+export async function getSwipeFeed(limit = 30): Promise<SwipeItemDto[]> {
+  const now = new Date()
+  const all = await loadLiveSeries() // small catalog — partition before limiting
+  if (!all.length) return []
+
+  const episodes = await prisma.episode.findMany({
+    where: { seriesId: { in: all.map(s => s.id) }, ...liveFilter(now), accessType: 'FREE', videoStatus: 'READY' },
+    orderBy: { episodeNumber: 'asc' },
+    select: {
+      id: true, seriesId: true, episodeNumber: true, title: true, description: true,
+      thumbnailUrl: true, durationSeconds: true, accessType: true, coinPrice: true,
+    },
+  })
+  const firstBySeries = new Map<string, (typeof episodes)[number]>()
+  for (const e of episodes) if (!firstBySeries.has(e.seriesId)) firstBySeries.set(e.seriesId, e)
+
+  const items = all.map(series => {
+    const e = firstBySeries.get(series.id)
+    return {
+      series,
+      episode: e ? {
+        id: e.id,
+        episode_number: e.episodeNumber,
+        title: e.title,
+        description: e.description,
+        thumbnail_url: e.thumbnailUrl,
+        duration_seconds: e.durationSeconds,
+        access_type: e.accessType,
+        coin_price: e.coinPrice,
+      } : null,
+    }
+  })
+  // Stable partition: playable first, popularity order kept within each half
+  return [...items.filter(i => i.episode), ...items.filter(i => !i.episode)].slice(0, limit)
+}
+
 // Same-genre titles first, then fill with the most popular
 export async function getRecommended(seriesId: string, limit = 6): Promise<SeriesDto[]> {
   const source = await prisma.series.findUnique({ where: { id: seriesId }, select: { genres: { select: { genreId: true } } } })

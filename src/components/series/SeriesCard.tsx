@@ -1,10 +1,15 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Play, Bookmark, Share2, Star, Eye, Lock, Crown, Flame, Check } from '@/components/ui/icons'
 import { Series } from '@/types'
+import VideoPlayer from '@/components/player/VideoPlayer'
+import { usePreviewEpisode, usePlaybackTicket } from '@/hooks'
+import { canAutoPreview } from '@/lib/preview'
+
+const CLIP_DELAY_MS = 600
 
 function fmt(v: number) {
   return v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : `${v}`
@@ -26,6 +31,18 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
     clearTimeout(enterTimer.current)
     setHovered(false)
   }, [])
+
+  // Hover clip: desktop only, after the viewer lingers, never on data-saver
+  const [clipOn, setClipOn] = useState(false)
+  const [clipShown, setClipShown] = useState(false)
+  const preview = usePreviewEpisode(series.id)
+  const wantsClip = hovered && !!preview && typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches && canAutoPreview()
+  const { data: ticket } = usePlaybackTicket(preview?.id, wantsClip)
+  useEffect(() => {
+    if (!wantsClip || !ticket) { setClipOn(false); setClipShown(false); return }
+    const t = setTimeout(() => setClipOn(true), CLIP_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [wantsClip, ticket])
 
   const w = WIDTHS[size]
   const hasProgress = typeof series.progress === 'number' && series.progress > 0
@@ -51,6 +68,12 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-brand-red/25 to-brand-dark flex items-center justify-center">
               <span className="font-display text-4xl text-brand-red/40">D</span>
+            </div>
+          )}
+
+          {clipOn && ticket && (
+            <div className={`absolute inset-0 transition-opacity duration-500 ${clipShown ? 'opacity-100' : 'opacity-0'}`}>
+              <VideoPlayer key={ticket.episode_id} src={ticket.url} controls={false} muted fit="cover" quiet onPlaying={() => setClipShown(true)} />
             </div>
           )}
 

@@ -23,7 +23,8 @@ export default function ConsumerChrome({ children }: { children: React.ReactNode
     <>
       <Navbar />
       {children}
-      <Footer />
+      {/* The swipe feed is a full-screen surface — no footer under it */}
+      {pathname !== '/shorts' && <Footer />}
       <BottomNav />
       <DailyRewardPrompt />
     </>

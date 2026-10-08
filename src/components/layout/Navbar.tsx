@@ -9,6 +9,7 @@ import LoginModal from '@/components/ui/LoginModal'
 import { useAuthStore } from '@/store/authStore'
 import { signOut } from '@/lib/auth'
 import { DailyRewardButton } from '@/components/monetisation/DailyReward'
+import SearchOverlay from '@/components/layout/SearchOverlay'
 
 function LanguageDropdown() {
   const [open, setOpen] = useState(false)
@@ -67,35 +68,6 @@ function CategoriesDropdown() {
   )
 }
 
-function SearchOverlay({ onClose }: { onClose: () => void }) {
-  const [query, setQuery] = useState('')
-  const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    ref.current?.focus()
-    const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', fn)
-    return () => document.removeEventListener('keydown', fn)
-  }, [onClose])
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-start justify-center pt-24 animate-fade-in">
-      <div className="w-full max-w-2xl mx-4">
-        <div className="flex items-center gap-3 bg-brand-card border border-brand-border rounded-2xl px-5 py-4">
-          <Search size={20} className="text-white flex-shrink-0" />
-          <input ref={ref} type="text" value={query} onChange={e => setQuery(e.target.value)}
-            placeholder="Search series, genres, stories..."
-            className="flex-1 bg-transparent text-white placeholder-brand-muted text-lg outline-none" />
-          <button onClick={onClose} className="text-brand-subtle hover:text-white"><X size={20} /></button>
-        </div>
-        {query && (
-          <div className="mt-2 bg-brand-card border border-brand-border rounded-xl p-4 text-brand-subtle text-sm text-center">
-            Searching for &quot;{query}&quot;...
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 function Logo() {
   return (
     <Link href="/" className="flex-shrink-0 group">
@@ -142,6 +114,7 @@ export default function Navbar() {
             <Logo />
             <nav className="hidden md:flex items-center gap-6 flex-1">
               <CategoriesDropdown />
+              <Link href="/shorts" className="nav-link">Shorts</Link>
               <Link href="/new-hot" className="nav-link">New &amp; Hot</Link>
               <Link href="/blog" className="nav-link">Blog</Link>
             </nav>
@@ -207,6 +180,7 @@ export default function Navbar() {
             <nav className="flex flex-col gap-1 p-4 mt-2">
               {[
                 { href: '/', label: 'Home' },
+                { href: '/shorts', label: 'Shorts' },
                 { href: '/categories', label: 'Categories' },
                 { href: '/new-hot', label: 'New & Hot' },
                 { href: '/blog', label: 'Blog' },
