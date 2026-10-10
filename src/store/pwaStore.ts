@@ -6,16 +6,19 @@ export interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+export type ManualInstall = 'ios-safari' | 'ios-other' | 'mac-safari' | null
+
 interface PwaState {
   // Captured install event — null when the browser can't (or already did) install
   installEvent: BeforeInstallPromptEvent | null
   // Running as the installed app (home-screen launch)
   isStandalone: boolean
-  // iPhone/iPad Safari: no install event, the user adds it from the Share sheet
-  isIOS: boolean
+  // Browsers with no install event, where the user adds the app by hand:
+  // iOS (Safari or Chrome → Share → Add to Home Screen) and Mac Safari (File → Add to Dock)
+  manualInstall: ManualInstall
 
   setInstallEvent: (e: BeforeInstallPromptEvent | null) => void
-  setEnvironment: (env: { isStandalone: boolean; isIOS: boolean }) => void
+  setEnvironment: (env: { isStandalone: boolean; manualInstall: ManualInstall }) => void
   // Opens the browser's install dialog; resolves true if the user accepted
   install: () => Promise<boolean>
 }
@@ -23,7 +26,7 @@ interface PwaState {
 export const usePwaStore = create<PwaState>()((set, get) => ({
   installEvent: null,
   isStandalone: false,
-  isIOS: false,
+  manualInstall: null,
 
   setInstallEvent: (installEvent) => set({ installEvent }),
   setEnvironment: (env) => set(env),

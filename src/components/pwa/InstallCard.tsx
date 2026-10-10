@@ -1,11 +1,12 @@
 'use client'
 
 import { usePwaStore } from '@/store/pwaStore'
-import { Globe, Download, CheckCircle, ShareIOS, PlusSquare } from '@/components/ui/icons'
+import { Globe, Download, CheckCircle } from '@/components/ui/icons'
+import InstallSteps from './InstallSteps'
 
 /** "Add to Home Screen" panel on /download — a real install button where the browser supports it */
 export default function InstallCard() {
-  const { installEvent, isStandalone, isIOS, install } = usePwaStore()
+  const { installEvent, isStandalone, manualInstall, install } = usePwaStore()
 
   return (
     <div className="bg-gradient-to-r from-brand-red/10 to-brand-dark border border-brand-red/20 rounded-2xl p-6 mb-10">
@@ -29,10 +30,11 @@ export default function InstallCard() {
         <>
           <p className="text-brand-subtle text-sm mb-4">Install Dramatique as an app right now — no App Store needed.</p>
           <div className="text-left space-y-2">
-            {(isIOS
-              ? [{ platform: '📱 iPhone / iPad', steps: <>Safari → <ShareIOS size={13} className="inline -mt-0.5" /> Share → Add to Home Screen <PlusSquare size={13} className="inline -mt-0.5" /></> }]
+            {(manualInstall
+              ? [{ platform: manualInstall === 'mac-safari' ? '💻 Mac' : '📱 iPhone / iPad', steps: <InstallSteps kind={manualInstall} /> }]
               : [
-                  { platform: '📱 iPhone', steps: <>Safari → Share → Add to Home Screen</> },
+                  { platform: '📱 iPhone / iPad', steps: <>Share → Add to Home Screen</> },
+                  { platform: '💻 Mac Safari', steps: <>File → Add to Dock</> },
                   { platform: '🤖 Android', steps: <>Chrome → Menu (⋮) → Install app / Add to Home Screen</> },
                   { platform: '💻 Desktop', steps: <>Chrome or Edge → install icon in the address bar</> },
                 ]
