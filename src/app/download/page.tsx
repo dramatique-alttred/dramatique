@@ -1,4 +1,5 @@
-import { Smartphone, Monitor, Globe } from '@/components/ui/icons'
+import { Monitor } from '@/components/ui/icons'
+import InstallCard from '@/components/pwa/InstallCard'
 
 const FEATURES = [
   { icon: '📺', title: 'Watch Anywhere', desc: 'Stream on your phone, tablet, or desktop' },
@@ -54,24 +55,7 @@ export default function DownloadPage() {
         </div>
 
         {/* PWA SECTION */}
-        <div className="bg-gradient-to-r from-brand-red/10 to-brand-dark border border-brand-red/20 rounded-2xl p-6 mb-10">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Globe size={20} className="text-brand-red" />
-            <h3 className="text-white font-bold text-base">Add to Home Screen</h3>
-          </div>
-          <p className="text-brand-subtle text-sm mb-4">Install Dramatique as an app right now — no App Store needed.</p>
-          <div className="text-left space-y-2 mb-4">
-            {[
-              { platform: '📱 iPhone', steps: 'Safari → Share button → Add to Home Screen' },
-              { platform: '🤖 Android', steps: 'Chrome → Menu (⋮) → Add to Home Screen' },
-            ].map(item => (
-              <div key={item.platform} className="bg-brand-black/50 rounded-xl p-3">
-                <p className="text-white font-bold text-xs mb-1">{item.platform}</p>
-                <p className="text-brand-subtle text-xs">{item.steps}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <InstallCard />
 
         {/* FEATURES */}
         <h2 className="text-white font-bold text-xl mb-5">Why you'll love it</h2>

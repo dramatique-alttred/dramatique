@@ -60,6 +60,7 @@ Migrations: `init`, `series_pricing_defaults` (lock point/price + backfill), `ep
 - Deleting an episode/series also removes its R2 files (HLS, raw source, images)
 - `apiClient` waits for Firebase to restore the session before sending requests (direct loads of admin pages used to 401)
 - **Video URL protection live**: Worker `media-dramatique` at https://media-dramatique.dramatique-media-worker.workers.dev (signed, 2 h, per-episode URLs; images public). Backend (DigitalOcean + local `.env`) uses it via `R2_PUBLIC_BASE_URL` + `MEDIA_TOKEN_SECRET`. Vercel env vars are Config type; R2 CORS + Firebase authorized domains include the Vercel URLs. **Still open: disable the r2.dev public URL on `dramatique-media`**
+- **PWA (installable web app)**: manifest (`src/app/manifest.ts`), icons (`public/icons/`, `src/app/apple-icon.png`), service worker `public/sw.js` (production only; registered by `components/pwa/PwaManager.tsx`). Pages network-first with cached fallback → `/offline`; hashed `/_next/static` cache-first; images stale-while-revalidate. Never touches the API, Firebase, video/HLS or `/admin`. Install card on the home page for returning mobile visitors (dismiss = 14 days; iOS shows Share → Add to Home Screen); real install button on `/download`. Bump `VERSION` in `sw.js` to wipe old caches
 - **Hosting prepared**: `backend/Dockerfile` (Node 22 + FFmpeg), multi-origin CORS, graceful shutdown, GitHub Actions checks. Plan: API on **DigitalOcean App Platform, Bangalore**, website on Vercel. Steps: `docs/DEPLOY.md`
 
 ### Demo content
