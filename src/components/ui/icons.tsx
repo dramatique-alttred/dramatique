@@ -29,6 +29,7 @@ import { CrownIcon } from '@phosphor-icons/react/dist/csr/Crown'
 import { DeviceMobileIcon } from '@phosphor-icons/react/dist/csr/DeviceMobile'
 import { DotsSixVerticalIcon } from '@phosphor-icons/react/dist/csr/DotsSixVertical'
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple'
+import { ExportIcon } from '@phosphor-icons/react/dist/csr/Export'
 import { EnvelopeIcon } from '@phosphor-icons/react/dist/csr/Envelope'
 import { EnvelopeSimpleOpenIcon } from '@phosphor-icons/react/dist/csr/EnvelopeSimpleOpen'
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye'
@@ -56,6 +57,7 @@ import { PencilSimpleIcon } from '@phosphor-icons/react/dist/csr/PencilSimple'
 import { PhoneIcon } from '@phosphor-icons/react/dist/csr/Phone'
 import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play'
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus'
+import { PlusSquareIcon } from '@phosphor-icons/react/dist/csr/PlusSquare'
 import { ProhibitIcon } from '@phosphor-icons/react/dist/csr/Prohibit'
 import { QuestionIcon } from '@phosphor-icons/react/dist/csr/Question'
 import { ReceiptIcon } from '@phosphor-icons/react/dist/csr/Receipt'
@@ -76,6 +78,7 @@ import { UserIcon } from '@phosphor-icons/react/dist/csr/User'
 import { UsersIcon } from '@phosphor-icons/react/dist/csr/Users'
 import { WarningIcon } from '@phosphor-icons/react/dist/csr/Warning'
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle'
+import { WifiSlashIcon } from '@phosphor-icons/react/dist/csr/WifiSlash'
 import { XIcon } from '@phosphor-icons/react/dist/csr/X'
 
 export type { IconWeight }
@@ -151,6 +154,7 @@ export const Pause = make(PauseIcon, 'Pause')
 export const Phone = make(PhoneIcon, 'Phone')
 export const Play = make(PlayIcon, 'Play')
 export const Plus = make(PlusIcon, 'Plus')
+export const PlusSquare = make(PlusSquareIcon, 'PlusSquare')
 export const Receipt = make(ReceiptIcon, 'Receipt')
 export const RotateCcw = make(ArrowCounterClockwiseIcon, 'RotateCcw')
 export const Save = make(FloppyDiskIcon, 'Save')
@@ -158,6 +162,7 @@ export const Search = make(MagnifyingGlassIcon, 'Search')
 export const Send = make(PaperPlaneRightIcon, 'Send')
 export const Settings = make(GearSixIcon, 'Settings')
 export const Share2 = make(ShareNetworkIcon, 'Share2')
+export const ShareIOS = make(ExportIcon, 'ShareIOS')
 export const Shield = make(ShieldCheckIcon, 'Shield')
 export const Smartphone = make(DeviceMobileIcon, 'Smartphone')
 export const Sparkles = make(SparkleIcon, 'Sparkles')
@@ -170,4 +175,5 @@ export const User = make(UserIcon, 'User')
 export const Volume2 = make(SpeakerSimpleHighIcon, 'Volume2')
 export const VolumeX = make(SpeakerSimpleSlashIcon, 'VolumeX')
 export const Users = make(UsersIcon, 'Users')
+export const WifiOff = make(WifiSlashIcon, 'WifiOff')
 export const X = make(XIcon, 'X')

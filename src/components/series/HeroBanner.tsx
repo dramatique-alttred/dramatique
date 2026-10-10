@@ -3,45 +3,25 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, BookmarkPlus, Check, ChevronLeft, ChevronRight, Star, Crown, Volume2, VolumeX } from '@/components/ui/icons'
-import VideoPlayer from '@/components/player/VideoPlayer'
-import { usePreviewEpisode, usePlaybackTicket, useSavedIds, useToggleSave } from '@/hooks'
-import { canAutoPreview } from '@/lib/preview'
+import { Play, BookmarkPlus, Check, ChevronLeft, ChevronRight, Star, Crown } from '@/components/ui/icons'
+import { useSavedIds, useToggleSave } from '@/hooks'
 import { Series } from '@/types'
 
 const SLIDE_MS = 7000
-const PREVIEW_DELAY_MS = 2500
 
 export default function HeroBanner({ series, loading = false }: { series: Series[]; loading?: boolean }) {
   const [current, setCurrent] = useState(0)
-  const [previewing, setPreviewing] = useState(false)   // preview mounted
-  const [previewShown, setPreviewShown] = useState(false) // first frame is playing
-  const [muted, setMuted] = useState(true)
-  const [allowPreview, setAllowPreview] = useState(false)
   const { data: savedIds = [] } = useSavedIds()
   const toggleSave = useToggleSave()
 
   const active = series[current] as Series | undefined
-  const preview = usePreviewEpisode(active?.id)
-  const { data: ticket } = usePlaybackTicket(preview?.id, allowPreview && !!preview)
 
-  useEffect(() => { setAllowPreview(canAutoPreview()) }, [])
-
-  // New slide: drop the old preview, then start this one after a beat
+  // Rotate slides
   useEffect(() => {
-    setPreviewing(false)
-    setPreviewShown(false)
-    if (!allowPreview || !ticket) return
-    const t = setTimeout(() => setPreviewing(true), PREVIEW_DELAY_MS)
-    return () => clearTimeout(t)
-  }, [current, ticket, allowPreview])
-
-  // Rotate slides — but never cut a preview off mid-play; it advances when it ends
-  useEffect(() => {
-    if (series.length <= 1 || previewing) return
+    if (series.length <= 1) return
     const t = setTimeout(() => setCurrent(p => (p + 1) % series.length), SLIDE_MS)
     return () => clearTimeout(t)
-  }, [series.length, current, previewing])
+  }, [series.length, current])
 
   if (loading) {
     return <div className="relative w-full h-[68vh] sm:h-[74vh] md:h-[86vh] skeleton" />
@@ -58,22 +38,6 @@ export default function HeroBanner({ series, loading = false }: { series: Series
           </div>
         </div>
       ))}
-
-      {/* Muted preview of episode 1 — full-bleed on phones, a 9:16 frame on desktop */}
-      {previewing && ticket && (
-        <div className={`absolute inset-0 md:inset-auto md:right-[8%] md:top-1/2 md:-translate-y-1/2 md:h-[62%] md:aspect-[9/16] md:rounded-2xl md:overflow-hidden md:ring-1 md:ring-white/15 md:shadow-2xl md:z-[1] transition-opacity duration-700 ${previewShown ? 'opacity-100' : 'opacity-0'}`}>
-          <VideoPlayer
-            key={ticket.episode_id}
-            src={ticket.url}
-            controls={false}
-            muted={muted}
-            fit="cover"
-            quiet
-            onPlaying={() => setPreviewShown(true)}
-            onEnded={() => setCurrent(p => (p + 1) % series.length)}
-          />
-        </div>
-      )}
 
       {/* Layered cinematic gradients — deeper, moodier */}
       <div className="absolute inset-0 cine-fade-r" />
@@ -122,15 +86,6 @@ export default function HeroBanner({ series, loading = false }: { series: Series
               >
                 {saved ? <><Check size={16} /> Saved</> : <><BookmarkPlus size={16} /> My List</>}
               </button>
-              {previewShown && (
-                <button
-                  onClick={() => setMuted(m => !m)}
-                  aria-label={muted ? 'Unmute preview' : 'Mute preview'}
-                  className="w-12 h-12 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm flex items-center justify-center text-white transition-colors animate-fade-in"
-                >
-                  {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                </button>
-              )}
             </div>
           </div>
         </div>
