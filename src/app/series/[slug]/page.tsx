@@ -5,13 +5,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import EmptyState from '@/components/ui/EmptyState'
-import VideoPlayer from '@/components/player/VideoPlayer'
+import ReelPlayer from '@/components/player/ReelPlayer'
 import { playbackApi, PlaybackInfo } from '@/lib/api'
 import { ApiError } from '@/lib/apiClient'
 import { useSeriesDetail, useRecommended, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
 import type { Episode } from '@/types'
-import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star } from '@/components/ui/icons'
+import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star, Maximize2 } from '@/components/ui/icons'
 
 // Remembered per browser — a viewer who opts in once wants it every binge
 const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
@@ -23,39 +23,6 @@ function useAutoUnlock(): [boolean, (on: boolean) => void] {
     try { localStorage.setItem(AUTO_UNLOCK_KEY, v ? '1' : '0') } catch { /* storage blocked */ }
   }
   return [on, set]
-}
-
-// Between episodes: a short countdown the viewer can skip or cancel
-const UP_NEXT_SECONDS = 5
-function UpNext({ episode, poster, onPlay, onCancel }: { episode: number; poster: string; onPlay: () => void; onCancel: () => void }) {
-  const [left, setLeft] = useState(UP_NEXT_SECONDS)
-  const onPlayRef = useRef(onPlay)
-  onPlayRef.current = onPlay
-  useEffect(() => {
-    if (left <= 0) { onPlayRef.current(); return }
-    const t = setTimeout(() => setLeft(l => l - 1), 1000)
-    return () => clearTimeout(t)
-  }, [left])
-  const R = 26, C = 2 * Math.PI * R
-  return (
-    <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center px-8 text-center animate-fade-in">
-      <div className="relative w-28 aspect-[2/3] rounded-xl overflow-hidden mb-4 ring-1 ring-white/10">
-        <Image src={poster} alt="" fill sizes="112px" className="object-cover" />
-      </div>
-      <p className="text-brand-subtle text-[11px] uppercase tracking-widest font-semibold">Up next</p>
-      <h3 className="text-white font-bold text-xl mb-5">Episode {episode}</h3>
-      <button onClick={onPlay} aria-label={`Play episode ${episode} now`} className="relative w-16 h-16 mb-4 active:scale-90 transition-transform">
-        <svg viewBox="0 0 60 60" className="absolute inset-0 -rotate-90">
-          <circle cx="30" cy="30" r={R} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
-          <circle cx="30" cy="30" r={R} fill="none" stroke="#E8001D" strokeWidth="3" strokeLinecap="round"
-            strokeDasharray={C} strokeDashoffset={C * (left / UP_NEXT_SECONDS)} className="transition-[stroke-dashoffset] duration-1000 ease-linear" />
-        </svg>
-        <span className="absolute inset-0 flex items-center justify-center"><Play size={24} fill="white" className="text-white ml-0.5" /></span>
-      </button>
-      <p className="text-white/70 text-xs mb-3">Playing in {left}s</p>
-      <button onClick={onCancel} className="text-brand-subtle hover:text-white text-sm font-semibold">Cancel</button>
-    </div>
-  )
 }
 
 function EpisodeGrid({ total, isLocked, currentEp, coinCost, onSelect }: { total: number; isLocked: (ep: number) => boolean; currentEp: number; coinCost: number; onSelect: (ep: number) => void }) {
@@ -85,9 +52,6 @@ function EpisodeGrid({ total, isLocked, currentEp, coinCost, onSelect }: { total
         </div>
       </div>
       <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-6 lg:grid-cols-8 gap-2">
-        <button onClick={() => onSelect(0)} className={`aspect-square rounded-lg text-[10px] font-bold flex items-center justify-center transition-all border ${currentEp === 0 ? 'bg-brand-red border-brand-red text-white' : 'bg-brand-card border-brand-border text-brand-subtle hover:text-white hover:border-brand-muted'}`}>
-          Trailer
-        </button>
         {eps.map(ep => {
           const locked = isLocked(ep)
           const active = currentEp === ep
@@ -121,7 +85,6 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const [notice, setNotice] = useState('')
   const [starting, setStarting] = useState(false)
   const [justFinished, setJustFinished] = useState(false)
-  const [upNext, setUpNext] = useState<number | null>(null)
   const [autoUnlock, setAutoUnlock] = useAutoUnlock()
 
   // Jump to where the user left off — once, when their access info arrives
@@ -152,7 +115,6 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const episodeByNumber = new Map(series.episodes.map(e => [e.episode_number, e]))
   const unlockedIds = new Set(access?.unlocked_episode_ids ?? [])
   const isEpisodeLocked = (n: number) => {
-    if (n === 0) return false // trailer
     const ep = episodeByNumber.get(n)
     if (!ep) return true
     if (ep.access_type === 'FREE' || access?.is_vip || access?.can_watch_all) return false
@@ -179,7 +141,6 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   }
 
   const handleEpSelect = (ep: number, fromEnded = false) => {
-    setUpNext(null)
     setJustFinished(fromEnded)
     setCurrentEp(ep)
     setPlayback(null)
@@ -218,12 +179,13 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
       unlockAndPlay(next)
       return
     }
-    // Locked → the cliffhanger paywall right away; open → a short "up next" beat
-    if (isEpisodeLocked(next.episode_number)) handleEpSelect(next.episode_number, true)
-    else setUpNext(next.episode_number)
+    // Locked → the cliffhanger paywall; open → straight into the next episode
+    handleEpSelect(next.episode_number, isEpisodeLocked(next.episode_number))
   }
 
   const isPlaying = !!playback && playback.episode_id === currentEpisode?.id
+  const episodePoster = currentEpisode?.thumbnail_url || series.thumbnail_url
+  const watchHref = `/watch/${series.slug}?ep=${currentEp}`
 
   return (
     <div className="min-h-screen bg-brand-black pt-16">
@@ -233,13 +195,13 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
         <div className="hidden md:flex items-center gap-2 text-xs text-brand-subtle py-4">
           <Link href="/" className="hover:text-white transition-colors">Home</Link><ChevronRight size={12} />
           <Link href="/categories" className="hover:text-white transition-colors">{series.genre}</Link><ChevronRight size={12} />
-          <span className="text-white font-medium">{currentEp === 0 ? 'Trailer' : `Episode ${currentEp}`}</span>
+          <span className="text-white font-medium">Episode {currentEp}</span>
         </div>
 
         <div className="flex flex-col md:flex-row gap-0 md:gap-8">
 
-          {/* LEFT: PLAYER */}
-          <div className="w-full md:w-[45%] lg:w-[46%] flex-shrink-0">
+          {/* LEFT: PLAYER — the same reel-style surface as the Shorts feed */}
+          <div className="w-full md:w-[42%] lg:w-[38%] flex-shrink-0 md:sticky md:top-20 md:self-start">
             <div className="md:hidden flex items-center gap-3 px-4 py-3">
               <Link href="/" className="w-9 h-9 rounded-full bg-brand-card flex items-center justify-center active:scale-90 transition-transform">
                 <ArrowLeft size={18} className="text-white" />
@@ -247,30 +209,37 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
               <span className="text-brand-text text-sm truncate">{series.title}</span>
             </div>
 
-            <div className="relative bg-black md:rounded-2xl md:overflow-hidden" style={{ aspectRatio: '9/16', maxHeight: '85vh' }}>
+            <div className="relative bg-black mx-auto md:rounded-3xl overflow-hidden md:ring-1 md:ring-white/10 md:shadow-2xl" style={{ aspectRatio: '9/16', maxHeight: '82vh' }}>
               {isPlaying ? (
-                <VideoPlayer
+                <ReelPlayer
                   key={playback.episode_id}
                   src={playback.url}
-                  poster={series.thumbnail_url}
+                  poster={episodePoster}
                   startAt={playback.resume_position_seconds}
+                  episodeLabel={`EP ${currentEp} / ${series.total_episodes}`}
+                  seriesTitle={series.title}
+                  episodeTitle={currentEpisode?.title}
+                  description={currentEpisode?.description}
+                  fullscreenHref={watchHref}
                   onProgress={pos => saveProgress.mutate({ episodeId: playback.episode_id, positionSeconds: pos })}
                   onEnded={handleEnded}
+                  onPrev={episodeByNumber.has(currentEp - 1) ? () => handleEpSelect(currentEp - 1) : undefined}
+                  onNext={episodeByNumber.has(currentEp + 1) ? () => handleEpSelect(currentEp + 1) : undefined}
                 />
               ) : (
                 <>
-                  <Image src={series.thumbnail_url} alt={series.title} fill className="object-cover" priority />
-                  <div className="absolute inset-0 bg-black/25" />
+                  <Image src={episodePoster} alt={series.title} fill sizes="(min-width: 768px) 420px, 100vw" className="object-cover" priority />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-black/40" />
 
                   {!isLocked ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                      <button onClick={handlePlay} disabled={starting} aria-label={`Play episode ${currentEp}`} className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-all active:scale-90 disabled:opacity-60">
-                        {starting ? <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Play size={28} fill="white" className="text-white ml-1" />}
+                      <button onClick={handlePlay} disabled={starting} aria-label={`Play episode ${currentEp}`} className="w-20 h-20 rounded-full bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-all active:scale-90 disabled:opacity-60">
+                        {starting ? <span className="w-7 h-7 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Play size={32} fill="white" className="text-white ml-1" />}
                       </button>
                       {notice && <p className="text-white text-sm font-semibold bg-black/60 px-3 py-1.5 rounded-full">{notice}</p>}
                     </div>
                   ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/75 backdrop-blur-md px-6">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md px-6">
                       <div className="w-14 h-14 rounded-full bg-brand-gold/15 flex items-center justify-center mb-3">
                         <Lock size={26} className="text-brand-gold" />
                       </div>
@@ -281,28 +250,27 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
                       </div>
                     </div>
                   )}
+
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                    <span className="bg-black/50 backdrop-blur text-white text-xs font-bold px-2.5 py-1 rounded-full">EP {currentEp} / {series.total_episodes}</span>
+                    {series.is_vip && (
+                      <span className="flex items-center gap-1 bg-brand-gold text-black text-[10px] font-black px-2 py-1 rounded uppercase">
+                        <Crown size={10} className="fill-black" /> VIP
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute left-0 right-0 bottom-0 p-4 pb-5 pointer-events-none">
+                    <h3 className="text-white font-bold text-base leading-tight drop-shadow">{series.title}</h3>
+                    {currentEpisode?.title && <p className="text-white/70 text-xs mt-0.5">{currentEpisode.title}</p>}
+                    {currentEpisode?.description && <p className="text-white/80 text-[13px] leading-snug mt-1.5 line-clamp-2">{currentEpisode.description}</p>}
+                  </div>
                 </>
               )}
-
-              {upNext !== null && (
-                <UpNext
-                  key={upNext}
-                  episode={upNext}
-                  poster={episodeByNumber.get(upNext)?.thumbnail_url || series.thumbnail_url}
-                  onPlay={() => handleEpSelect(upNext)}
-                  onCancel={() => setUpNext(null)}
-                />
-              )}
-
-              <div className="absolute top-3 right-3 bg-black/60 backdrop-blur text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                {currentEp === 0 ? 'Trailer' : `EP ${currentEp}`} / {series.total_episodes}
-              </div>
-              {series.is_vip && (
-                <div className="absolute top-3 left-3 flex items-center gap-1 bg-brand-gold text-black text-[10px] font-black px-2 py-1 rounded uppercase">
-                  <Crown size={10} className="fill-black" /> VIP
-                </div>
-              )}
             </div>
+
+            <Link href={watchHref} className="hidden md:flex items-center justify-center gap-2 mt-3 text-brand-subtle hover:text-white text-xs font-semibold transition-colors">
+              <Maximize2 size={14} /> Watch in full screen
+            </Link>
           </div>
 
           {/* RIGHT: INFO */}
@@ -360,6 +328,14 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
             </div>
 
             <div className="border-t border-brand-border mb-5" />
+
+            {currentEpisode && (
+              <div className="mb-5 rounded-2xl bg-brand-card border border-brand-border p-4">
+                <p className="text-brand-red text-[11px] font-black uppercase tracking-widest mb-1">Now selected · Episode {currentEp}</p>
+                <p className="text-white font-bold text-base leading-snug">{currentEpisode.title}</p>
+                {currentEpisode.description && <p className="text-brand-text text-sm leading-relaxed mt-1.5">{currentEpisode.description}</p>}
+              </div>
+            )}
 
             <h3 className="text-white font-bold text-sm mb-3">Episodes</h3>
             <EpisodeGrid total={series.total_episodes} isLocked={isEpisodeLocked} currentEp={currentEp} coinCost={series.coin_cost_per_episode} onSelect={handleEpSelect} />

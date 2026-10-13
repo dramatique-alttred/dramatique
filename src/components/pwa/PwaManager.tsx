@@ -6,8 +6,9 @@ import { usePwaStore, type BeforeInstallPromptEvent } from '@/store/pwaStore'
 import { Download, ShareIOS, PlusSquare, X } from '@/components/ui/icons'
 
 const DISMISS_KEY = 'dq_install_dismissed_at'
-const VISITS_KEY = 'dq_visits'
-const DISMISS_FOR_MS = 14 * 24 * 60 * 60 * 1000
+// Closing the card only snoozes it — it comes back an hour later
+const DISMISS_FOR_MS = 60 * 60 * 1000
+const SHOW_AFTER_MS = 3000
 
 function safeGet(store: Storage, key: string) {
   try { return store.getItem(key) } catch { return null }
@@ -18,7 +19,8 @@ function safeSet(store: Storage, key: string, value: string) {
 
 /**
  * Registers the service worker, tracks installability and shows a small
- * "Install Dramatique" card to returning mobile visitors on the home page.
+ * "Install Dramatique" card in the corner of every page (except the admin and
+ * the full-screen player). Closing it snoozes it for an hour.
  */
 export default function PwaManager() {
   const pathname = usePathname()
@@ -41,12 +43,6 @@ export default function PwaManager() {
     const iosSafari = ios && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
     setEnvironment({ isStandalone: standalone, isIOS: iosSafari })
 
-    // Count one visit per browser session
-    if (!safeGet(sessionStorage, VISITS_KEY)) {
-      safeSet(sessionStorage, VISITS_KEY, '1')
-      safeSet(localStorage, VISITS_KEY, String(Number(safeGet(localStorage, VISITS_KEY) ?? 0) + 1))
-    }
-
     const onPrompt = (e: Event) => {
       e.preventDefault() // we show our own card instead of Chrome's mini-infobar
       setInstallEvent(e as BeforeInstallPromptEvent)
@@ -63,20 +59,25 @@ export default function PwaManager() {
     }
   }, [setEnvironment, setInstallEvent])
 
-  // Nudge only on the home page, from the second visit, unless recently dismissed
+  // Show by default on consumer pages. A dismissal snoozes it for an hour; the
+  // timer below brings it back even if the visitor never navigates.
+  const [dismissedAt, setDismissedAt] = useState(0)
   useEffect(() => {
     setShow(false)
-    if (pathname !== '/' || isStandalone || !(installEvent || isIOS)) return
-    if (Number(safeGet(localStorage, VISITS_KEY) ?? 0) < 2) return
-    if (Date.now() - Number(safeGet(localStorage, DISMISS_KEY) ?? 0) < DISMISS_FOR_MS) return
-    const t = setTimeout(() => setShow(true), 6000)
+    const hidden = pathname?.startsWith('/admin') || pathname?.startsWith('/watch')
+    if (hidden || isStandalone || !(installEvent || isIOS)) return
+    const last = dismissedAt || Number(safeGet(localStorage, DISMISS_KEY) ?? 0)
+    const wait = Math.max(SHOW_AFTER_MS, last + DISMISS_FOR_MS - Date.now())
+    const t = setTimeout(() => setShow(true), wait)
     return () => clearTimeout(t)
-  }, [pathname, isStandalone, installEvent, isIOS])
+  }, [pathname, isStandalone, installEvent, isIOS, dismissedAt])
 
   if (!show) return null
 
   const dismiss = () => {
-    safeSet(localStorage, DISMISS_KEY, String(Date.now()))
+    const now = Date.now()
+    safeSet(localStorage, DISMISS_KEY, String(now))
+    setDismissedAt(now)
     setShow(false)
   }
 

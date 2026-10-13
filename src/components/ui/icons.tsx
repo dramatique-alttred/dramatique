@@ -8,6 +8,7 @@ import type { Icon as PhosphorIcon, IconProps, IconWeight } from '@phosphor-icon
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise'
 import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft'
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/csr/ArrowRight'
+import { ArrowsOutSimpleIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutSimple'
 import { BellIcon } from '@phosphor-icons/react/dist/csr/Bell'
 import { BookmarkSimpleIcon } from '@phosphor-icons/react/dist/csr/BookmarkSimple'
 import { BookmarksSimpleIcon } from '@phosphor-icons/react/dist/csr/BookmarksSimple'
@@ -153,6 +154,7 @@ export const Monitor = make(MonitorIcon, 'Monitor')
 export const Pause = make(PauseIcon, 'Pause')
 export const Phone = make(PhoneIcon, 'Phone')
 export const Play = make(PlayIcon, 'Play')
+export const Maximize2 = make(ArrowsOutSimpleIcon, 'Maximize2')
 export const Plus = make(PlusIcon, 'Plus')
 export const PlusSquare = make(PlusSquareIcon, 'PlusSquare')
 export const Receipt = make(ReceiptIcon, 'Receipt')
