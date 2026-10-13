@@ -29,17 +29,25 @@ function requireStorage() {
 
 export async function createImageUpload(body: Body) {
   requireStorage()
-  const kind = body.kind === 'banner' ? 'banner' : body.kind === 'poster' ? 'poster' : null
-  if (!kind) throw new HttpError(400, 'kind must be poster or banner')
+  const kind = body.kind === 'banner' ? 'banner' : body.kind === 'poster' ? 'poster' : body.kind === 'thumbnail' ? 'thumbnail' : null
+  if (!kind) throw new HttpError(400, 'kind must be poster, banner or thumbnail')
   const contentType = String(body.contentType ?? '')
   const ext = IMAGE_TYPES[contentType]
   if (!ext) throw new HttpError(400, 'Use a JPG, PNG or WebP image')
   const size = Number(body.size)
   if (!Number.isInteger(size) || size <= 0 || size > MAX_IMAGE_BYTES) throw new HttpError(400, 'Images must be under 5 MB')
-  // New series don't have an id yet — their images live under "drafts"
-  const owner = typeof body.seriesId === 'string' && /^[0-9a-f-]{36}$/i.test(body.seriesId) ? body.seriesId : 'drafts'
+  const isId = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v)
 
-  const key = `images/series/${owner}/${kind}-${Date.now()}.${ext}`
+  let key: string
+  if (kind === 'thumbnail') {
+    // Episode thumbnails live under their episode so deleting it cleans them up
+    if (!isId(body.episodeId)) throw new HttpError(400, 'episodeId is required for a thumbnail')
+    key = `images/episodes/${body.episodeId}/thumb-${Date.now()}.${ext}`
+  } else {
+    // New series don't have an id yet — their images live under "drafts"
+    const owner = isId(body.seriesId) ? body.seriesId : 'drafts'
+    key = `images/series/${owner}/${kind}-${Date.now()}.${ext}`
+  }
   const { url: uploadUrl, headers } = await presignPut(buckets.media, key, contentType, size)
   return {
     uploadUrl,
@@ -136,6 +144,7 @@ async function removeMedia(what: string, work: Promise<unknown>[]) {
 const episodeFiles = (id: string) => [
   deletePrefix(buckets.media, `videos/${id}/`),
   deletePrefix(buckets.uploads, `raw/${id}/`),
+  deletePrefix(buckets.media, `images/episodes/${id}/`),
 ]
 
 export function deleteEpisodeMedia(episodeId: string) {

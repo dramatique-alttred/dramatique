@@ -71,7 +71,7 @@ export const adminEpisodeApi = {
 
 // ── MEDIA (posters / banners) ──────────────────────────
 export const adminMediaApi = {
-  createImageUpload: (body: { kind: 'poster' | 'banner'; contentType: string; size: number; seriesId?: string }) =>
+  createImageUpload: (body: { kind: 'poster' | 'banner' | 'thumbnail'; contentType: string; size: number; seriesId?: string; episodeId?: string }) =>
     apiClient.post<{ uploadUrl: string; headers: Record<string, string>; url: string; key: string }>('/admin/uploads/image', body),
 }
 

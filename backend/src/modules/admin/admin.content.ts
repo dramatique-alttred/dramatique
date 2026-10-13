@@ -246,6 +246,7 @@ function toAdminEpisode(e: EpisodeRow) {
     episode_number: e.episodeNumber,
     title: e.title,
     description: e.description ?? '',
+    thumbnail_url: e.thumbnailUrl ?? '',
     duration_seconds: e.durationSeconds,
     access_type: e.accessType,
     is_free: e.accessType === 'FREE',
@@ -295,6 +296,7 @@ export async function createEpisode(seriesId: string, body: Body) {
       episodeNumber: number,
       title: str(body, 'title', { max: 255 }) || `Episode ${number}`,
       description: str(body, 'description', { max: 5000 }) || null,
+      thumbnailUrl: url(body, 'thumbnail_url', 'Thumbnail URL') || null,
       durationSeconds: int(body, 'duration_seconds', { min: 0, max: 36000, label: 'Duration' }) ?? 0,
       accessType: isFree ? 'FREE' : 'COIN_LOCKED',
       coinPrice,
@@ -318,6 +320,7 @@ export async function updateEpisode(id: string, body: Body) {
   if (number !== undefined) data.episodeNumber = number
   if (has(body, 'title')) data.title = str(body, 'title', { max: 255 }) || `Episode ${number ?? current.episodeNumber}`
   if (has(body, 'description')) data.description = str(body, 'description', { max: 5000 }) || null
+  if (has(body, 'thumbnail_url')) data.thumbnailUrl = url(body, 'thumbnail_url', 'Thumbnail URL') || null
   if (has(body, 'duration_seconds')) data.durationSeconds = int(body, 'duration_seconds', { min: 0, max: 36000, label: 'Duration' }) ?? 0
   if (has(body, 'subtitles_url')) data.subtitlesKey = str(body, 'subtitles_url', { max: 500 }) || null
 
