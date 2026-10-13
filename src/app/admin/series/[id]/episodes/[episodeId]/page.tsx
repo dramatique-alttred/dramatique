@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import AdminLayout from '@/components/admin/AdminLayout'
-import { AdminPageHeader, FormField, Input, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
+import { AdminPageHeader, FormField, Input, Textarea, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
 import VideoUpload from '@/components/admin/VideoUpload'
+import ImageUpload from '@/components/admin/ImageUpload'
 import { useAdminSeriesOne, useAdminEpisodeOne, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminEpisodeApi } from '@/lib/admin-api'
 import { Save, Loader2, Trash2 } from '@/components/ui/icons'
@@ -37,6 +38,8 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
       setForm({
         episode_number: episode.episode_number,
         title: episode.title,
+        description: episode.description || '',
+        thumbnail_url: episode.thumbnail_url || '',
         duration: formatDuration(episode.duration_seconds),
         is_free: episode.is_free,
         coin_cost: episode.coin_cost ?? series?.coin_cost_per_episode ?? 5,
@@ -70,6 +73,8 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
       await adminEpisodeApi.update(params.episodeId, {
         episode_number: form.episode_number,
         title: form.title,
+        description: form.description || null,
+        thumbnail_url: form.thumbnail_url || null,
         ...(!durationLocked && { duration_seconds: parseDuration(form.duration) }),
         is_free: form.is_free,
         coin_cost: form.is_free ? null : form.coin_cost,
@@ -139,6 +144,12 @@ export default function EditEpisodePage({ params }: { params: { id: string; epis
                 )}
               </div>
               <FormField label="Title" required><Input value={form.title} onChange={e => set('title', e.target.value)} /></FormField>
+              <FormField label="Description" hint="A short teaser for this episode">
+                <Textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} maxLength={5000} placeholder="What happens in this episode?" />
+              </FormField>
+              <FormField label="Thumbnail" hint="Vertical 9:16 works best. Falls back to the series poster if empty.">
+                <ImageUpload kind="thumbnail" value={form.thumbnail_url} onChange={v => set('thumbnail_url', v)} seriesId={params.episodeId} />
+              </FormField>
             </div>
           </AdminCard>
 

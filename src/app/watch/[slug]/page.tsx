@@ -120,6 +120,7 @@ function EpisodeCard({
       <div className="absolute left-0 right-16 bottom-0 z-[2] p-4 pb-20 md:pb-6 pointer-events-none">
         <h2 className="text-white font-bold text-lg leading-tight drop-shadow">{series.title}</h2>
         <p className="text-white/70 text-xs mt-0.5">Episode {episode.episode_number} of {series.total_episodes}{episode.title ? ` · ${episode.title}` : ''}</p>
+        {episode.description && <p className="text-white/80 text-[13px] leading-snug mt-1.5 line-clamp-2">{episode.description}</p>}
       </div>
 
       {/* End of the line: only shows when there is genuinely nothing to roll into */}

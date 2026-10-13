@@ -10,9 +10,10 @@ import { uploadImage, IMAGE_TYPES } from '@/lib/admin-upload'
  * still works for images hosted elsewhere.
  */
 export default function ImageUpload({ kind, value, onChange, seriesId }: {
-  kind: 'poster' | 'banner'
+  kind: 'poster' | 'banner' | 'thumbnail'
   value: string
   onChange: (url: string) => void
+  /** Series id for poster/banner, episode id for a thumbnail */
   seriesId?: string
 }) {
   const input = useRef<HTMLInputElement>(null)
@@ -21,7 +22,7 @@ export default function ImageUpload({ kind, value, onChange, seriesId }: {
   const [dragging, setDragging] = useState(false)
   const [showUrl, setShowUrl] = useState(false)
 
-  const aspect = kind === 'poster' ? 'aspect-[2/3] w-32' : 'aspect-video w-full max-w-sm'
+  const aspect = kind === 'poster' ? 'aspect-[2/3] w-32' : kind === 'thumbnail' ? 'aspect-[9/16] w-28' : 'aspect-video w-full max-w-sm'
 
   const handleFile = async (file?: File) => {
     if (!file) return

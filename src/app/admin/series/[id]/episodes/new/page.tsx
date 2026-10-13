@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
-import { AdminPageHeader, FormField, Input, Select, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
+import { AdminPageHeader, FormField, Input, Textarea, Select, Toggle, AdminBtn, AdminCard, Breadcrumb } from '@/components/admin/AdminUI'
 import { useAdminSeriesOne, useAdminEpisodes, adminKeys } from '@/hooks/admin/useAdminQueries'
 import { adminEpisodeApi } from '@/lib/admin-api'
 import { useQueryClient } from '@tanstack/react-query'
@@ -16,7 +16,7 @@ export default function AddEpisodePage({ params }: { params: { id: string } }) {
   const { data: episodes = [] } = useAdminEpisodes(params.id)
 
   const [form, setForm] = useState({
-    number: 1, title: '',
+    number: 1, title: '', description: '',
     is_free: false, coin_cost: 5, subtitles_url: '', publish_date: '',
   })
   // Follows the series lock point until the admin flips the toggle themselves
@@ -41,6 +41,7 @@ export default function AddEpisodePage({ params }: { params: { id: string } }) {
       const created = await adminEpisodeApi.create(params.id, {
         number: form.number,
         title: form.title || `Episode ${form.number}`,
+        description: form.description || null,
         is_free: form.is_free,
         coin_cost: form.is_free ? null : form.coin_cost,
         subtitles_url: form.subtitles_url || null,
@@ -98,6 +99,9 @@ export default function AddEpisodePage({ params }: { params: { id: string } }) {
             <div className="space-y-4">
               <FormField label="Episode Number" required><Input type="number" value={form.number} onChange={e => { const n = Number(e.target.value); setForm(f => ({ ...f, number: n, ...(!freeTouched && series && { is_free: n < series.lock_from_episode }) })) }} /></FormField>
               <FormField label="Title" required><Input value={form.title} onChange={e => set('title', e.target.value)} placeholder={`Episode ${form.number}`} /></FormField>
+              <FormField label="Description" hint="Optional — you can add a thumbnail on the next screen">
+                <Textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} maxLength={5000} placeholder="What happens in this episode?" />
+              </FormField>
             </div>
           </AdminCard>
 

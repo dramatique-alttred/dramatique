@@ -52,13 +52,19 @@ function put(url: string, body: Blob, headers: Record<string, string>, onProgres
 
 // ── Images ──────────────────────────────────────────
 
-/** Uploads a poster/banner and returns its public URL (to store on the series). */
+/**
+ * Uploads a poster/banner/episode thumbnail and returns its public URL.
+ * `ownerId` is the series id (poster/banner) or the episode id (thumbnail).
+ */
 export async function uploadImage(
-  file: File, kind: 'poster' | 'banner', seriesId: string | undefined, onProgress: (pct: number) => void,
+  file: File, kind: 'poster' | 'banner' | 'thumbnail', ownerId: string | undefined, onProgress: (pct: number) => void,
 ) {
   if (!IMAGE_TYPES.includes(file.type)) throw new Error('Use a JPG, PNG or WebP image')
   if (file.size > MAX_IMAGE_BYTES) throw new Error('Images must be under 5 MB')
-  const { uploadUrl, headers, url } = await adminMediaApi.createImageUpload({ kind, contentType: file.type, size: file.size, seriesId })
+  const { uploadUrl, headers, url } = await adminMediaApi.createImageUpload({
+    kind, contentType: file.type, size: file.size,
+    ...(kind === 'thumbnail' ? { episodeId: ownerId } : { seriesId: ownerId }),
+  })
   await put(uploadUrl, file, headers, loaded => onProgress(Math.round((loaded / file.size) * 100)))
   return url
 }
