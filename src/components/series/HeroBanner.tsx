@@ -76,7 +76,7 @@ export default function HeroBanner({ series, loading = false }: { series: Series
             </div>
 
             <div className="flex items-center gap-3">
-              <Link href={`/series/${active.slug}`} className="flex items-center gap-2 bg-brand-red hover:bg-brand-redHover text-white font-bold px-7 py-3.5 rounded-xl transition-all duration-200 text-sm shadow-glow-red active:scale-[0.97]">
+              <Link href={`/watch/${active.slug}`} className="flex items-center gap-2 bg-brand-red hover:bg-brand-redHover text-white font-bold px-7 py-3.5 rounded-xl transition-all duration-200 text-sm shadow-glow-red active:scale-[0.97]">
                 <Play size={17} fill="white" /> Watch Free
               </Link>
               <button
