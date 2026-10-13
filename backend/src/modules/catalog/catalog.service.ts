@@ -112,13 +112,17 @@ function toDto(row: SeriesRow, trendingIds: Set<string>, now: Date): SeriesDto {
 // The catalog is small (hundreds of series, not millions), so most reads load
 // the live set once and slice it in memory. When it grows, this is the spot
 // to put the Redis cache from the Phase 2 plan.
-async function loadLiveSeries(where: Prisma.SeriesWhereInput = {}, take?: number): Promise<SeriesDto[]> {
+async function loadLiveSeries(
+  where: Prisma.SeriesWhereInput = {},
+  take?: number,
+  orderBy: Prisma.SeriesOrderByWithRelationInput[] = [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
+): Promise<SeriesDto[]> {
   const now = new Date()
   const [rows, trending] = await Promise.all([
     prisma.series.findMany({
       where: { ...liveFilter(now), ...where },
       include: seriesInclude(now),
-      orderBy: [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
+      orderBy,
       take,
     }),
     prisma.series.findMany({
@@ -171,7 +175,9 @@ export async function listSeries(opts: { genre?: string; q?: string; exclude?: s
 }
 
 export async function getHero(): Promise<SeriesDto[]> {
-  const featured = await loadLiveSeries({ isFeatured: true }, 5)
+  // Newest release leads the slider — a brand-new series has no views yet, so
+  // the default most-viewed ordering would always bury it at the end
+  const featured = await loadLiveSeries({ isFeatured: true }, 5, [{ publishedAt: 'desc' }, { viewCount: 'desc' }])
   return featured.length ? featured : loadLiveSeries({}, 3)
 }
 
