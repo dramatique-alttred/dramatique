@@ -336,9 +336,9 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
             </div>
 
             {/* Primary CTA */}
-            <button onClick={() => handleEpSelect(access?.last_episode ?? 1)} className="w-full btn-primary py-3 flex items-center justify-center gap-2 mb-4">
+            <Link href={`/watch/${series.slug}?ep=${access?.last_episode ?? 1}`} className="w-full btn-primary py-3 flex items-center justify-center gap-2 mb-4">
               <Play size={16} fill="white" /> {access?.last_episode ? `Resume Episode ${access.last_episode}` : 'Start Watching — Free'}
-            </button>
+            </Link>
 
             <div className="border-t border-brand-border mb-4" />
 

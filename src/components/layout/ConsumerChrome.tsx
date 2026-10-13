@@ -19,6 +19,11 @@ export default function ConsumerChrome({ children }: { children: React.ReactNode
     return <>{children}</>
   }
 
+  // Watch mode is a full-screen, distraction-free surface: no navbar, footer or prompts
+  if (pathname?.startsWith('/watch/')) {
+    return <>{children}</>
+  }
+
   return (
     <>
       <Navbar />
