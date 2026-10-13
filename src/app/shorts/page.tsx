@@ -143,7 +143,7 @@ function ShortCard({
         <h2 className="text-white font-bold text-xl leading-tight drop-shadow">{series.title}</h2>
         <p className="text-white/80 text-[13px] leading-snug mt-1 line-clamp-2">{series.synopsis}</p>
         <Link
-          href={`/series/${series.slug}`}
+          href={`/watch/${series.slug}?ep=${episode?.episode_number ?? 1}`}
           className="pointer-events-auto mt-3 inline-flex items-center gap-2 bg-white/15 hover:bg-brand-red backdrop-blur-md border border-white/20 hover:border-brand-red text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors"
         >
           <Play size={14} fill="white" /> {episode ? 'Watch full series' : 'View series'} · {series.total_episodes} eps
@@ -155,7 +155,7 @@ function ShortCard({
         <div className="absolute inset-0 z-[3] bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center px-8 text-center animate-fade-in">
           <p className="text-brand-red text-[11px] font-black uppercase tracking-widest mb-2">Episode {episode?.episode_number} finished</p>
           <h3 className="text-white font-bold text-2xl mb-5 leading-tight">Don&apos;t stop now</h3>
-          <Link href={`/series/${series.slug}`} className="btn-primary w-full max-w-[240px] py-3 flex items-center justify-center gap-2 mb-3">
+          <Link href={`/watch/${series.slug}?ep=${nextEp}`} className="btn-primary w-full max-w-[240px] py-3 flex items-center justify-center gap-2 mb-3">
             <Play size={16} fill="white" /> Continue to Episode {nextEp}
           </Link>
           <button onClick={() => { setEnded(false); setProgress(0); setReplayKey(k => k + 1) }} className="text-white/70 hover:text-white text-sm flex items-center gap-1.5">
