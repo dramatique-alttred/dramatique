@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import VideoPlayer from '@/components/player/VideoPlayer'
-import { Play, Volume2, VolumeX, ChevronUp, ChevronDown, Maximize2 } from '@/components/ui/icons'
+import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
+import { Volume2, VolumeX, ChevronUp, ChevronDown, Maximize2 } from '@/components/ui/icons'
 
 /**
  * The series page's player, dressed like the swipe feed: edge-to-edge picture,
@@ -30,7 +31,7 @@ export default function ReelPlayer({
   const [paused, setPaused] = useState(false)
   const [muted, setMuted] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [flash, setFlash] = useState(false)
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null)
 
   // A different episode starts fresh
   useEffect(() => { setPaused(false); setProgress(0) }, [src])
@@ -48,12 +49,6 @@ export default function ReelPlayer({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const togglePause = useCallback(() => {
-    setPaused(p => !p)
-    setFlash(true)
-    setTimeout(() => setFlash(false), 500)
-  }, [])
-
   return (
     <div className="absolute inset-0 bg-black">
       <VideoPlayer
@@ -65,25 +60,21 @@ export default function ReelPlayer({
         muted={muted}
         paused={paused}
         onMutedFallback={() => setMuted(true)}
+        onVideoRef={setVideoEl}
         onTick={(pos, dur) => setProgress(pos / dur)}
         onProgress={pos => onProgress(pos)}
         onEnded={onEnded}
       />
 
-      {/* Tap anywhere to pause / resume */}
-      <button onClick={togglePause} aria-label={paused ? 'Play' : 'Pause'} className="absolute inset-0 z-[1] flex items-center justify-center">
-        {(paused || flash) && (
-          <span className="w-16 h-16 rounded-full bg-black/45 backdrop-blur flex items-center justify-center animate-scale-in">
-            <Play size={30} fill="white" className="text-white ml-1" />
-          </span>
-        )}
-      </button>
+      {/* Tap to pause · press and hold the left / right side for 2x */}
+      <TapHoldLayer video={videoEl} paused={paused} onToggle={() => setPaused(p => !p)} />
 
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/85 via-transparent to-black/35" />
 
       {/* Top: episode chip, sound, full screen */}
       <div className="absolute top-3 left-3 right-3 z-[2] flex items-center justify-between pointer-events-none">
-        <span className="bg-black/50 backdrop-blur text-white text-xs font-bold px-2.5 py-1 rounded-full">{episodeLabel}</span>
+        {/* Hidden while playing so nothing sits on the picture */}
+        <span className={`bg-black/50 backdrop-blur text-white text-xs font-bold px-2.5 py-1 rounded-full transition-opacity ${paused ? 'opacity-100' : 'opacity-0'}`}>{episodeLabel}</span>
         <div className="flex items-center gap-2 pointer-events-auto">
           <button onClick={() => setMuted(m => !m)} aria-label={muted ? 'Unmute' : 'Mute'} className="w-9 h-9 rounded-full bg-black/45 backdrop-blur flex items-center justify-center">
             {muted ? <VolumeX size={16} className="text-white" /> : <Volume2 size={16} className="text-white" />}
@@ -111,16 +102,14 @@ export default function ReelPlayer({
       )}
 
       {/* Story line */}
-      <div className="absolute left-0 right-14 bottom-0 z-[2] p-4 pb-5 pointer-events-none">
+      <div className="absolute left-0 right-14 bottom-0 z-[2] p-4 pb-7 pointer-events-none">
         <h3 className="text-white font-bold text-base leading-tight drop-shadow">{seriesTitle}</h3>
         {episodeTitle && <p className="text-white/70 text-xs mt-0.5">{episodeTitle}</p>}
         {description && <p className="text-white/80 text-[13px] leading-snug mt-1.5 line-clamp-2">{description}</p>}
       </div>
 
-      {/* Episode progress */}
-      <div className="absolute left-0 right-0 bottom-0 z-[2] h-1 bg-white/15">
-        <div className="h-full bg-brand-red transition-[width] duration-300 ease-linear" style={{ width: `${progress * 100}%` }} />
-      </div>
+      {/* Episode progress — touch and drag to scrub */}
+      <ScrubBar video={videoEl} progress={progress} className="left-0 right-0 bottom-0" />
     </div>
   )
 }
