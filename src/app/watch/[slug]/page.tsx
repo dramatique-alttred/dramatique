@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import VideoPlayer from '@/components/player/VideoPlayer'
 import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
@@ -168,6 +168,7 @@ function EpisodeCard({
 }
 
 function WatchInner({ slug }: { slug: string }) {
+  const router = useRouter()
   const params = useSearchParams()
   const epParam = Number(params.get('ep')) || 0
   const { data: series, isError } = useSeriesDetail(slug)
@@ -287,7 +288,7 @@ function WatchInner({ slug }: { slug: string }) {
   const saved = !!series && savedIds.includes(series.id)
   const share = async () => {
     if (!series) return
-    const url = `${window.location.origin}/series/${series.slug}`
+    const url = `${window.location.origin}/watch/${series.slug}`
     try {
       if (navigator.share) await navigator.share({ title: series.title, text: `Watch ${series.title} on Dramatique`, url })
       else { await navigator.clipboard.writeText(url); showToast('Link copied 🔗', 'success') }
@@ -337,9 +338,13 @@ function WatchInner({ slug }: { slug: string }) {
       {series && activeEpisode && (
         <>
           <div className={`absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-3 md:px-6 pointer-events-none bg-gradient-to-b from-black/50 to-transparent transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 [&_a]:pointer-events-none [&_button]:pointer-events-none'}`}>
-            <Link href={`/series/${series.slug}`} aria-label="Back to series" className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center active:scale-90 transition-transform">
+            <button
+              onClick={() => (window.history.length > 1 ? router.back() : router.push('/'))}
+              aria-label="Back"
+              className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center active:scale-90 transition-transform"
+            >
               <ArrowLeft size={20} className="text-white" />
-            </Link>
+            </button>
             <button onClick={() => setMuted(m => !m)} aria-label={muted ? 'Unmute' : 'Mute'} className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center">
               {muted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
             </button>
@@ -373,7 +378,10 @@ function WatchInner({ slug }: { slug: string }) {
       {pickerOpen && series && (
         <div className="absolute inset-0 z-20 bg-black/70 flex items-end md:items-center justify-center" onClick={() => setPickerOpen(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full md:max-w-md max-h-[70vh] overflow-y-auto bg-brand-card rounded-t-2xl md:rounded-2xl p-4">
-            <h3 className="text-white font-bold text-sm mb-3">Episodes</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-bold text-sm">Episodes</h3>
+              <Link href={`/series/${series.slug}`} className="text-brand-subtle hover:text-white text-xs font-semibold transition-colors">Series details →</Link>
+            </div>
             <div className="grid grid-cols-6 gap-2">
               {episodes.map((ep, i) => (
                 <button key={ep.id} onClick={() => jumpTo(i)}

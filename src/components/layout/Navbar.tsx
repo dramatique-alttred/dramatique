@@ -108,7 +108,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-brand-black/95 backdrop-blur-md border-b border-brand-border' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-brand-black/95 backdrop-blur-md shadow-[0_10px_30px_-12px_rgba(0,0,0,0.9)]' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
         <div className="px-5 md:px-8">
           <div className="flex items-center gap-6 h-16">
             <Logo />

@@ -46,7 +46,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   const openSeries = (slug: string) => {
     if (query.trim()) pushRecent(query.trim())
     onClose()
-    router.push(`/series/${slug}`)
+    router.push(`/watch/${slug}`)
   }
   const seeAll = (q = query.trim()) => {
     if (!q) return
@@ -116,7 +116,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                 {results.map((s, i) => (
                   <li key={s.id} role="option" aria-selected={i === highlight}>
                     <Link
-                      href={`/series/${s.slug}`}
+                      href={`/watch/${s.slug}`}
                       onClick={e => { e.preventDefault(); openSeries(s.slug) }}
                       onMouseEnter={() => setHighlight(i)}
                       className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${i === highlight ? 'bg-brand-dark' : ''}`}

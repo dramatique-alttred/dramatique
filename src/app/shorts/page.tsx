@@ -55,7 +55,7 @@ function ShortCard({
   const nextEp = (episode?.episode_number ?? 0) + 1
 
   const share = async () => {
-    const url = `${window.location.origin}/series/${series.slug}`
+    const url = `${window.location.origin}/watch/${series.slug}`
     try {
       if (navigator.share) await navigator.share({ title: series.title, text: `Watch ${series.title} on Dramatique`, url })
       else { await navigator.clipboard.writeText(url); showToast('Link copied 🔗', 'success') }

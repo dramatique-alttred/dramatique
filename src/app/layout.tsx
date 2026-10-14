@@ -5,10 +5,19 @@ import Providers from '@/components/Providers'
 import ConsumerChrome from '@/components/layout/ConsumerChrome'
 import PwaManager from '@/components/pwa/PwaManager'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dramatique-shorts.vercel.app'
+const TITLE = 'Dramatique — Short Dramas. Big Emotions. Endless Stories.'
+const DESCRIPTION = 'Stream the best micro-drama series. CEO Romance, Supernatural, Revenge, Crime Thriller.'
+
 export const metadata: Metadata = {
-  title: 'Dramatique — Short Dramas. Big Emotions. Endless Stories.',
-  description: 'Stream the best micro-drama series. CEO Romance, Supernatural, Revenge, Crime Thriller.',
+  // Makes the share image and canonical links absolute for social crawlers
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
   applicationName: 'Dramatique',
+  // The share image comes from app/opengraph-image.png and app/twitter-image.png
+  openGraph: { type: 'website', siteName: 'Dramatique', title: TITLE, description: DESCRIPTION, locale: 'en_US' },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
   // Installed on iOS: launches full-screen with a dark status bar
   appleWebApp: { capable: true, title: 'Dramatique', statusBarStyle: 'black' },
   formatDetection: { telephone: false },

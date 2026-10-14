@@ -48,7 +48,7 @@ export default function HistoryPage() {
                     <div className="h-full bg-brand-red/60 rounded-full" style={{ width: `${s.progress}%` }} />
                   </div>
                 </div>
-                <a href={`/series/${s.slug}`} className="flex-shrink-0 w-9 h-9 rounded-full bg-brand-dark border border-brand-border flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-colors">
+                <a href={`/watch/${s.slug}`} className="flex-shrink-0 w-9 h-9 rounded-full bg-brand-dark border border-brand-border flex items-center justify-center hover:bg-brand-red hover:border-brand-red transition-colors">
                   <Play size={14} fill="white" className="text-white ml-0.5" />
                 </a>
               </div>
