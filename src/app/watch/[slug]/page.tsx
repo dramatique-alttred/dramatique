@@ -140,7 +140,7 @@ function EpisodeCard({
       )}
 
       {/* Story info — minimal, never covers the picture */}
-      <div className={`absolute left-0 right-16 bottom-0 z-[2] p-4 pb-20 md:pb-6 pointer-events-none transition-opacity duration-300 ${uiVisible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute left-0 right-16 bottom-0 z-[2] p-4 pb-8 md:pb-6 pointer-events-none transition-opacity duration-300 ${uiVisible ? 'opacity-100' : 'opacity-0'}`}>
         <h2 className="text-white font-bold text-lg leading-tight drop-shadow">{series.title}</h2>
         <p className="text-white/70 text-xs mt-0.5">Episode {episode.episode_number} of {series.total_episodes}{episode.title ? ` · ${episode.title}` : ''}</p>
         {episode.description && <p className="text-white/80 text-[13px] leading-snug mt-1.5 line-clamp-2">{episode.description}</p>}
@@ -365,7 +365,7 @@ function WatchInner({ slug }: { slug: string }) {
           </div>
 
           {/* Side rail */}
-          <div className={`absolute right-3 bottom-28 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-5 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`absolute right-3 bottom-8 md:bottom-10 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-5 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button onClick={() => toggleSave.mutate(series.id)} aria-label={saved ? 'Remove from My List' : 'Add to My List'} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
               <span className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur ${saved ? 'bg-brand-red' : 'bg-black/45'}`}>
                 {saved ? <Check size={20} className="text-white" /> : <Bookmark size={20} className="text-white" />}
