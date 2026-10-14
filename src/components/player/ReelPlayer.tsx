@@ -98,7 +98,7 @@ export default function ReelPlayer({
 
       {/* Prev / next episode */}
       {(onPrev || onNext) && (
-        <div className={`absolute right-3 bottom-24 z-[2] flex flex-col gap-2 ${fade}`}>
+        <div className={`absolute right-3 bottom-8 z-[2] flex flex-col gap-2 ${fade}`}>
           {onPrev && (
             <button onClick={onPrev} aria-label="Previous episode" className="w-10 h-10 rounded-full bg-black/45 backdrop-blur flex items-center justify-center active:scale-90 transition-transform">
               <ChevronUp size={18} className="text-white" />
