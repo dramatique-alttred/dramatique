@@ -60,7 +60,7 @@ export default function NewHotPage() {
                 <span className="badge-new mb-2 inline-block">#{1} {TABS.find(t=>t.id===tab)?.label}</span>
                 <h2 className="text-white font-bold text-2xl md:text-3xl mb-2">{series[0].title}</h2>
                 <p className="text-brand-subtle text-sm mb-4 hidden md:block max-w-md">{series[0].synopsis}</p>
-                <a href={`/series/${series[0].slug}`} className="btn-primary inline-flex items-center gap-2">▶ Watch Now</a>
+                <a href={`/watch/${series[0].slug}`} className="btn-primary inline-flex items-center gap-2">▶ Watch Now</a>
               </div>
             </div>
           </div>

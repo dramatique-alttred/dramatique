@@ -1,6 +1,18 @@
 'use client'
 
 import Link from 'next/link'
+import { Instagram, Youtube, Facebook, TikTok, XTwitter, WhatsApp } from '@/components/ui/icons'
+
+// Set NEXT_PUBLIC_SOCIAL_* in the environment to point these at the real profiles;
+// until then they open each platform's home page.
+const SOCIAL = [
+  { label: 'Instagram', Icon: Instagram, href: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM || 'https://www.instagram.com/' },
+  { label: 'YouTube', Icon: Youtube, href: process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE || 'https://www.youtube.com/' },
+  { label: 'Facebook', Icon: Facebook, href: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK || 'https://www.facebook.com/' },
+  { label: 'TikTok', Icon: TikTok, href: process.env.NEXT_PUBLIC_SOCIAL_TIKTOK || 'https://www.tiktok.com/' },
+  { label: 'X', Icon: XTwitter, href: process.env.NEXT_PUBLIC_SOCIAL_X || 'https://x.com/' },
+  { label: 'WhatsApp', Icon: WhatsApp, href: process.env.NEXT_PUBLIC_SOCIAL_WHATSAPP || 'https://www.whatsapp.com/' },
+]
 
 const LINKS = {
   Discover: [
@@ -49,10 +61,18 @@ export default function Footer() {
             <p className="text-brand-subtle text-sm leading-relaxed mb-4">
               Short dramas. Big emotions. Endless stories.
             </p>
-            <div className="flex gap-3">
-              {['Instagram', 'TikTok', 'YouTube', 'Facebook'].map(s => (
-                <a key={s} href="#" className="w-8 h-8 rounded-full bg-brand-card border border-brand-border flex items-center justify-center text-brand-subtle hover:text-white hover:border-brand-muted transition-colors text-xs font-bold">
-                  {s[0]}
+            <div className="flex flex-wrap gap-2.5">
+              {SOCIAL.map(({ label, Icon, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Dramatique on ${label}`}
+                  title={label}
+                  className="w-10 h-10 rounded-full bg-brand-card border border-brand-border flex items-center justify-center text-brand-subtle hover:text-white hover:bg-brand-red hover:border-brand-red transition-colors"
+                >
+                  <Icon size={18} />
                 </a>
               ))}
             </div>

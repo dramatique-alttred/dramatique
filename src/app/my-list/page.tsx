@@ -41,7 +41,7 @@ export default function MyListPage() {
                     </div>
                     <p className="text-brand-muted text-[10px] mt-1">{s.progress}% watched</p>
                   </div>
-                  <a href={`/series/${s.slug}`} className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-red flex items-center justify-center hover:bg-brand-redHover transition-colors">
+                  <a href={`/watch/${s.slug}`} className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-red flex items-center justify-center hover:bg-brand-redHover transition-colors">
                     <Play size={16} fill="white" className="text-white ml-0.5" />
                   </a>
                 </div>

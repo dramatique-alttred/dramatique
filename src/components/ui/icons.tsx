@@ -8,6 +8,13 @@ import type { Icon as PhosphorIcon, IconProps, IconWeight } from '@phosphor-icon
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise'
 import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft'
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/csr/ArrowRight'
+import { FacebookLogoIcon } from '@phosphor-icons/react/dist/csr/FacebookLogo'
+import { InstagramLogoIcon } from '@phosphor-icons/react/dist/csr/InstagramLogo'
+import { TelegramLogoIcon } from '@phosphor-icons/react/dist/csr/TelegramLogo'
+import { TiktokLogoIcon } from '@phosphor-icons/react/dist/csr/TiktokLogo'
+import { WhatsappLogoIcon } from '@phosphor-icons/react/dist/csr/WhatsappLogo'
+import { XLogoIcon } from '@phosphor-icons/react/dist/csr/XLogo'
+import { YoutubeLogoIcon } from '@phosphor-icons/react/dist/csr/YoutubeLogo'
 import { ArrowsOutSimpleIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutSimple'
 import { BellIcon } from '@phosphor-icons/react/dist/csr/Bell'
 import { BookmarkSimpleIcon } from '@phosphor-icons/react/dist/csr/BookmarkSimple'
@@ -155,6 +162,13 @@ export const Pause = make(PauseIcon, 'Pause')
 export const Phone = make(PhoneIcon, 'Phone')
 export const Play = make(PlayIcon, 'Play')
 export const Maximize2 = make(ArrowsOutSimpleIcon, 'Maximize2')
+export const Instagram = make(InstagramLogoIcon, 'Instagram')
+export const Youtube = make(YoutubeLogoIcon, 'Youtube')
+export const Facebook = make(FacebookLogoIcon, 'Facebook')
+export const TikTok = make(TiktokLogoIcon, 'TikTok')
+export const XTwitter = make(XLogoIcon, 'XTwitter')
+export const WhatsApp = make(WhatsappLogoIcon, 'WhatsApp')
+export const Telegram = make(TelegramLogoIcon, 'Telegram')
 export const Plus = make(PlusIcon, 'Plus')
 export const PlusSquare = make(PlusSquareIcon, 'PlusSquare')
 export const Receipt = make(ReceiptIcon, 'Receipt')

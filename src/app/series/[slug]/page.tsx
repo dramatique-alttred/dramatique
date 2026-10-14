@@ -10,8 +10,9 @@ import { playbackApi, PlaybackInfo } from '@/lib/api'
 import { ApiError } from '@/lib/apiClient'
 import { useSeriesDetail, useRecommended, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
+import { useUIStore } from '@/store/uiStore'
 import type { Episode } from '@/types'
-import { Heart, Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star, Maximize2 } from '@/components/ui/icons'
+import { Bookmark, Share2, Lock, Play, ChevronRight, Crown, ArrowLeft, Check, Star, Maximize2 } from '@/components/ui/icons'
 
 // Remembered per browser — a viewer who opts in once wants it every binge
 const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
@@ -76,9 +77,9 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
   const unlock = useUnlockEpisode()
   const saveProgress = useSaveProgress()
   const balance = useCoinStore(s => s.balance)
+  const showToast = useUIStore(st => st.showToast)
 
   const [currentEp, setCurrentEp] = useState(1)
-  const [liked, setLiked] = useState(false)
   const [showFull, setShowFull] = useState(false)
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [playback, setPlayback] = useState<PlaybackInfo | null>(null)
@@ -150,6 +151,14 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
     else if (episode) startPlayback(episode.id)
   }
 
+  const shareSeries = async () => {
+    const url = `${window.location.origin}/watch/${series.slug}`
+    try {
+      if (navigator.share) await navigator.share({ title: series.title, text: `Watch ${series.title} on Dramatique`, url })
+      else { await navigator.clipboard.writeText(url); showToast('Link copied 🔗', 'success') }
+    } catch { /* share sheet dismissed */ }
+  }
+
   const handlePlay = () => {
     if (!currentEpisode) return
     if (isLocked) setPaywallOpen(true)
@@ -201,7 +210,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
         <div className="flex flex-col md:flex-row gap-0 md:gap-8">
 
           {/* LEFT: PLAYER — the same reel-style surface as the Shorts feed */}
-          <div className="w-full md:w-[42%] lg:w-[38%] flex-shrink-0 md:sticky md:top-20 md:self-start">
+          <div className="w-full md:w-[42%] lg:w-[38%] flex-shrink-0">
             <div className="md:hidden flex items-center gap-3 px-4 py-3">
               <Link href="/" className="w-9 h-9 rounded-full bg-brand-card flex items-center justify-center active:scale-90 transition-transform">
                 <ArrowLeft size={18} className="text-white" />
@@ -273,72 +282,57 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
             </Link>
           </div>
 
-          {/* RIGHT: INFO */}
-          <div className="flex-1 px-4 md:px-0 py-5 md:py-2 overflow-y-auto scroll-hide" style={{ maxHeight: '85vh' }}>
+          {/* RIGHT: INFO — one simple column that scrolls with the page */}
+          <div className="flex-1 min-w-0 px-4 md:px-0 py-5 md:py-2">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-brand-red text-xs font-black uppercase tracking-widest">{series.genre}</span>
-              {series.rating && <span className="flex items-center gap-1 text-brand-gold text-xs font-bold"><Star size={11} fill="currentColor" />{series.rating}</span>}
+              {series.rating ? <span className="flex items-center gap-1 text-brand-gold text-xs font-bold"><Star size={11} fill="currentColor" />{series.rating}</span> : null}
             </div>
-            <h1 className="text-white font-bold text-2xl leading-tight mb-1">{series.title}</h1>
-            <div className="flex items-center gap-2 text-brand-subtle text-xs mb-4">
-              <span>{series.total_episodes} Episodes</span>
-              <span className="w-1 h-1 rounded-full bg-brand-muted" />
-              <span className="text-green-400">Free through Ep {series.lock_from_episode - 1}</span>
-              <span className="w-1 h-1 rounded-full bg-brand-muted" />
-              <span>{series.language}</span>
-            </div>
+            <h1 className="text-white font-bold text-3xl leading-tight mb-2">{series.title}</h1>
+            <p className="text-brand-subtle text-sm mb-4">
+              {series.total_episodes} episodes · <span className="text-green-400">Free through Ep {series.lock_from_episode - 1}</span> · {series.language}
+            </p>
 
-            <p className="text-brand-text text-sm leading-relaxed mb-4">
-              {showFull ? series.synopsis : `${series.synopsis.slice(0, 120)}${series.synopsis.length > 120 ? '…' : ''}`}
-              {series.synopsis.length > 120 && (
+            <p className="text-brand-text text-[15px] leading-relaxed mb-6">
+              {showFull ? series.synopsis : `${series.synopsis.slice(0, 160)}${series.synopsis.length > 160 ? '…' : ''}`}
+              {series.synopsis.length > 160 && (
                 <button onClick={() => setShowFull(!showFull)} className="text-brand-red ml-1 font-semibold hover:text-red-400">
                   {showFull ? 'Less' : 'More'}
                 </button>
               )}
             </p>
 
-            <div className="flex flex-wrap gap-2 mb-5">
-              {(series.tags || [series.genre, series.language]).map(tag => (
-                <span key={tag} className="text-xs text-brand-text border border-brand-border px-3 py-1 rounded-full hover:border-brand-muted cursor-pointer transition-colors">{tag}</span>
-              ))}
-            </div>
-
-            {/* Primary CTA */}
-            <Link href={`/watch/${series.slug}?ep=${access?.last_episode ?? 1}`} className="w-full btn-primary py-3 flex items-center justify-center gap-2 mb-4">
-              <Play size={16} fill="white" /> {access?.last_episode ? `Resume Episode ${access.last_episode}` : 'Start Watching — Free'}
-            </Link>
-
-            <div className="border-t border-brand-border mb-4" />
-
-            <div className="flex items-center justify-around mb-5">
-              <button onClick={() => setLiked(!liked)} className="flex flex-col items-center gap-1.5 group active:scale-90 transition-transform">
-                <Heart size={22} className={liked ? 'text-brand-red fill-brand-red' : 'text-brand-subtle group-hover:text-white'} />
-                <span className={`text-xs font-semibold ${liked ? 'text-brand-red' : 'text-brand-subtle'}`}>39.5k</span>
+            {/* One main action, two quiet ones */}
+            <div className="flex items-center gap-3 mb-8">
+              <Link href={`/watch/${series.slug}?ep=${access?.last_episode ?? 1}`} className="flex-1 btn-primary py-3 flex items-center justify-center gap-2">
+                <Play size={16} fill="white" /> {access?.last_episode ? `Resume Episode ${access.last_episode}` : 'Start Watching — Free'}
+              </Link>
+              <button
+                onClick={() => toggleSave.mutate(series.id)}
+                disabled={toggleSave.isPending}
+                aria-label={saved ? 'Remove from My List' : 'Add to My List'}
+                className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-colors active:scale-95 ${saved ? 'bg-brand-red/15 border-brand-red text-brand-red' : 'border-brand-border text-brand-subtle hover:text-white hover:border-brand-muted'}`}
+              >
+                {saved ? <Check size={20} /> : <Bookmark size={20} />}
               </button>
-              <div className="w-px h-8 bg-brand-border" />
-              <button onClick={() => toggleSave.mutate(series.id)} disabled={toggleSave.isPending} className="flex flex-col items-center gap-1.5 group active:scale-90 transition-transform">
-                {saved ? <Check size={22} className="text-brand-red" /> : <Bookmark size={22} className="text-brand-subtle group-hover:text-white" />}
-                <span className={`text-xs font-semibold ${saved ? 'text-brand-red' : 'text-brand-subtle'}`}>{saved ? 'Saved' : 'My List'}</span>
-              </button>
-              <div className="w-px h-8 bg-brand-border" />
-              <button className="flex flex-col items-center gap-1.5 group active:scale-90 transition-transform">
-                <Share2 size={22} className="text-brand-subtle group-hover:text-white" />
-                <span className="text-xs font-semibold text-brand-subtle group-hover:text-white">Share</span>
+              <button
+                onClick={shareSeries}
+                aria-label="Share"
+                className="w-12 h-12 rounded-xl border border-brand-border text-brand-subtle hover:text-white hover:border-brand-muted flex items-center justify-center transition-colors active:scale-95"
+              >
+                <Share2 size={20} />
               </button>
             </div>
 
-            <div className="border-t border-brand-border mb-5" />
+            <h2 className="text-white font-bold text-base mb-3">Episodes</h2>
+            <EpisodeGrid total={series.total_episodes} isLocked={isEpisodeLocked} currentEp={currentEp} coinCost={series.coin_cost_per_episode} onSelect={handleEpSelect} />
 
-            {currentEpisode && (
-              <div className="mb-5 rounded-2xl bg-brand-card border border-brand-border p-4">
-                <p className="text-brand-red text-[11px] font-black uppercase tracking-widest mb-1">Now selected · Episode {currentEp}</p>
-                <p className="text-white font-bold text-base leading-snug">{currentEpisode.title}</p>
-                {currentEpisode.description && <p className="text-brand-text text-sm leading-relaxed mt-1.5">{currentEpisode.description}</p>}
+            {currentEpisode && (currentEpisode.title || currentEpisode.description) && (
+              <div className="mt-6">
+                <p className="text-white font-semibold text-sm">Episode {currentEp}{currentEpisode.title ? ` · ${currentEpisode.title}` : ''}</p>
+                {currentEpisode.description && <p className="text-brand-subtle text-sm leading-relaxed mt-1">{currentEpisode.description}</p>}
               </div>
             )}
-
-            <h3 className="text-white font-bold text-sm mb-3">Episodes</h3>
-            <EpisodeGrid total={series.total_episodes} isLocked={isEpisodeLocked} currentEp={currentEp} coinCost={series.coin_cost_per_episode} onSelect={handleEpSelect} />
           </div>
         </div>
 
@@ -363,7 +357,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
           <h2 className="text-white font-bold text-lg mb-4">You May Also Like</h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
             {recommended.map(s => (
-              <Link key={s.id} href={`/series/${s.slug}`} className="group">
+              <Link key={s.id} href={`/watch/${s.slug}`} className="group">
                 <div className="aspect-[2/3] relative rounded-xl overflow-hidden mb-2 ring-1 ring-white/5">
                   <Image src={s.thumbnail_url} alt={s.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="200px" />
                   <div className="absolute inset-0 cine-fade opacity-70" />

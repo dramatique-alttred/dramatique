@@ -54,7 +54,7 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <Link href={`/series/${series.slug}`} className="block">
+      <Link href={`/watch/${series.slug}`} className="block">
         <div className="w-full aspect-[2/3] relative bg-brand-card rounded-xl overflow-hidden group ring-1 ring-white/5">
           {!imgErr ? (
             <Image
@@ -193,7 +193,7 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
             )}
 
             <div className="flex items-center gap-2">
-              <Link href={`/series/${series.slug}`} className="flex-1 h-9 rounded-lg bg-brand-red hover:bg-brand-redHover flex items-center justify-center gap-1.5 transition-colors active:scale-[0.97]">
+              <Link href={`/watch/${series.slug}`} className="flex-1 h-9 rounded-lg bg-brand-red hover:bg-brand-redHover flex items-center justify-center gap-1.5 transition-colors active:scale-[0.97]">
                 <Play size={14} fill="white" className="text-white" />
                 <span className="text-white text-xs font-bold">{hasProgress ? 'Resume' : 'Watch'}</span>
               </Link>

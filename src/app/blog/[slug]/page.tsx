@@ -56,7 +56,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                 <div className="flex-1">
                   <p className="text-white font-bold text-sm">Forbidden CEO</p>
                   <p className="text-brand-subtle text-xs mb-2">45 episodes · CEO Romance</p>
-                  <Link href="/series/forbidden-ceo" className="text-brand-red text-xs font-bold hover:text-red-400 transition-colors">Watch Now →</Link>
+                  <Link href="/watch/forbidden-ceo" className="text-brand-red text-xs font-bold hover:text-red-400 transition-colors">Watch Now →</Link>
                 </div>
               </div>
             </div>
