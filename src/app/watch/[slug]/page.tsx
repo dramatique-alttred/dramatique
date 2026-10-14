@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import VideoPlayer from '@/components/player/VideoPlayer'
+import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
 import { usePlaybackTicket, useSeriesDetail, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
 import { useUIStore } from '@/store/uiStore'
@@ -18,7 +19,7 @@ const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
 interface AccessInfo { is_vip?: boolean; can_watch_all?: boolean; unlocked_episode_ids?: string[] }
 
 function EpisodeCard({
-  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay,
+  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, total,
 }: {
   series: SeriesDetail
   episode: Episode
@@ -32,6 +33,8 @@ function EpisodeCard({
   isLast: boolean
   nextAvailable: boolean
   onReplay: () => void
+  onOpenPicker: () => void
+  total: number
 }) {
   const { data: ticket, isError } = usePlaybackTicket(episode.id, !locked && (active || preload))
   const saveProgress = useSaveProgress()
@@ -39,6 +42,7 @@ function EpisodeCard({
   const [progress, setProgress] = useState(0)
   const [done, setDone] = useState(false)
   const [replayKey, setReplayKey] = useState(0)
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null)
 
   // Leaving a card resets it so coming back starts clean
   useEffect(() => {
@@ -65,6 +69,7 @@ function EpisodeCard({
           paused={!active || paused || done}
           quiet={!active}
           onMutedFallback={() => onMutedChange(true)}
+          onVideoRef={setVideoEl}
           onTick={(pos, dur) => { if (active) setProgress(pos / dur) }}
           onProgress={pos => { if (active) saveProgress.mutate({ episodeId: episode.id, positionSeconds: pos }) }}
           onEnded={dur => {
@@ -85,14 +90,15 @@ function EpisodeCard({
         </div>
       )}
 
-      {/* Tap anywhere to pause / resume */}
+      {/* Tap to pause · press and hold the left / right side for 2x */}
       {playable && active && !done && (
-        <button onClick={() => setPaused(p => !p)} aria-label={paused ? 'Play' : 'Pause'} className="absolute inset-0 z-[1] flex items-center justify-center">
-          {paused && (
-            <span className="w-16 h-16 rounded-full bg-black/45 backdrop-blur flex items-center justify-center animate-scale-in">
-              <Play size={30} fill="white" className="text-white ml-1" />
-            </span>
-          )}
+        <TapHoldLayer video={videoEl} paused={paused} onToggle={() => setPaused(p => !p)} />
+      )}
+
+      {/* Episode chip + picker: only while paused, so it never sits on the picture */}
+      {active && (paused || !playable) && (
+        <button onClick={onOpenPicker} className="absolute top-3 left-1/2 -translate-x-1/2 z-[3] bg-black/45 backdrop-blur text-white text-xs font-bold px-3 py-2 rounded-full">
+          EP {episode.episode_number} / {total} ▾
         </button>
       )}
 
@@ -141,10 +147,8 @@ function EpisodeCard({
         </div>
       )}
 
-      {playable && active && (
-        <div className="absolute left-0 right-0 bottom-0 z-[2] h-0.5 bg-white/15">
-          <div className="h-full bg-brand-red transition-[width] duration-300 ease-linear" style={{ width: `${progress * 100}%` }} />
-        </div>
+      {playable && active && !done && (
+        <ScrubBar video={videoEl} progress={progress} className="left-0 right-0 bottom-0" />
       )}
     </div>
   )
@@ -300,6 +304,8 @@ function WatchInner({ slug }: { slug: string }) {
                 isLast={i === episodes.length - 1}
                 nextAvailable={ep.episode_number < series.total_episodes}
                 onReplay={() => { /* local to the card */ }}
+                onOpenPicker={() => setPickerOpen(true)}
+                total={series.total_episodes}
               />
             )}
           </section>
@@ -319,9 +325,6 @@ function WatchInner({ slug }: { slug: string }) {
             <Link href={`/series/${series.slug}`} aria-label="Back to series" className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center active:scale-90 transition-transform">
               <ArrowLeft size={20} className="text-white" />
             </Link>
-            <button onClick={() => setPickerOpen(true)} className="pointer-events-auto bg-black/40 backdrop-blur text-white text-xs font-bold px-3 py-2 rounded-full">
-              EP {activeEpisode.episode_number} / {series.total_episodes} ▾
-            </button>
             <button onClick={() => setMuted(m => !m)} aria-label={muted ? 'Unmute' : 'Mute'} className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center">
               {muted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
             </button>
