@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import VideoPlayer from '@/components/player/VideoPlayer'
+import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
 import { usePlaybackTicket, useSeriesDetail, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
 import { useUIStore } from '@/store/uiStore'
@@ -18,7 +19,7 @@ const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
 interface AccessInfo { is_vip?: boolean; can_watch_all?: boolean; unlocked_episode_ids?: string[] }
 
 function EpisodeCard({
-  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay,
+  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, onUiVisible, total,
 }: {
   series: SeriesDetail
   episode: Episode
@@ -32,6 +33,9 @@ function EpisodeCard({
   isLast: boolean
   nextAvailable: boolean
   onReplay: () => void
+  onOpenPicker: () => void
+  onUiVisible: (visible: boolean) => void
+  total: number
 }) {
   const { data: ticket, isError } = usePlaybackTicket(episode.id, !locked && (active || preload))
   const saveProgress = useSaveProgress()
@@ -39,6 +43,17 @@ function EpisodeCard({
   const [progress, setProgress] = useState(0)
   const [done, setDone] = useState(false)
   const [replayKey, setReplayKey] = useState(0)
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null)
+  // While the episode plays the picture is left completely clean; the details
+  // come back when the viewer pauses or touches the screen
+  const [touched, setTouched] = useState(false)
+  const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const poke = () => {
+    setTouched(true)
+    if (touchTimer.current) clearTimeout(touchTimer.current)
+    touchTimer.current = setTimeout(() => setTouched(false), 3000)
+  }
+  useEffect(() => () => { if (touchTimer.current) clearTimeout(touchTimer.current) }, [])
 
   // Leaving a card resets it so coming back starts clean
   useEffect(() => {
@@ -47,6 +62,8 @@ function EpisodeCard({
 
   const poster = episode.thumbnail_url || series.thumbnail_url
   const playable = !locked && !!ticket && !isError
+  const uiVisible = !playable || paused || done || touched
+  useEffect(() => { if (active) onUiVisible(uiVisible) }, [active, uiVisible, onUiVisible])
   // A finished episode saves its end as the resume point — replay from the top instead
   const resume = ticket && ticket.duration_seconds && ticket.resume_position_seconds >= ticket.duration_seconds - 3 ? 0 : ticket?.resume_position_seconds ?? 0
 
@@ -65,6 +82,7 @@ function EpisodeCard({
           paused={!active || paused || done}
           quiet={!active}
           onMutedFallback={() => onMutedChange(true)}
+          onVideoRef={setVideoEl}
           onTick={(pos, dur) => { if (active) setProgress(pos / dur) }}
           onProgress={pos => { if (active) saveProgress.mutate({ episodeId: episode.id, positionSeconds: pos }) }}
           onEnded={dur => {
@@ -85,18 +103,19 @@ function EpisodeCard({
         </div>
       )}
 
-      {/* Tap anywhere to pause / resume */}
+      {/* Tap to pause · press and hold the left / right side for 2x */}
       {playable && active && !done && (
-        <button onClick={() => setPaused(p => !p)} aria-label={paused ? 'Play' : 'Pause'} className="absolute inset-0 z-[1] flex items-center justify-center">
-          {paused && (
-            <span className="w-16 h-16 rounded-full bg-black/45 backdrop-blur flex items-center justify-center animate-scale-in">
-              <Play size={30} fill="white" className="text-white ml-1" />
-            </span>
-          )}
+        <TapHoldLayer video={videoEl} paused={paused} onToggle={() => setPaused(p => !p)} onTouch={poke} />
+      )}
+
+      {/* Episode chip + picker: only while paused, so it never sits on the picture */}
+      {active && (paused || !playable) && (
+        <button onClick={onOpenPicker} className="absolute top-3 left-1/2 -translate-x-1/2 z-[3] bg-black/45 backdrop-blur text-white text-xs font-bold px-3 py-2 rounded-full">
+          EP {episode.episode_number} / {total} ▾
         </button>
       )}
 
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-black/30" />
+      <div className={`absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-black/30 transition-opacity duration-300 ${uiVisible ? 'opacity-100' : 'opacity-0'}`} />
 
       {/* Locked: the only thing that ever interrupts the flow */}
       {locked && (
@@ -117,7 +136,7 @@ function EpisodeCard({
       )}
 
       {/* Story info — minimal, never covers the picture */}
-      <div className="absolute left-0 right-16 bottom-0 z-[2] p-4 pb-20 md:pb-6 pointer-events-none">
+      <div className={`absolute left-0 right-16 bottom-0 z-[2] p-4 pb-20 md:pb-6 pointer-events-none transition-opacity duration-300 ${uiVisible ? 'opacity-100' : 'opacity-0'}`}>
         <h2 className="text-white font-bold text-lg leading-tight drop-shadow">{series.title}</h2>
         <p className="text-white/70 text-xs mt-0.5">Episode {episode.episode_number} of {series.total_episodes}{episode.title ? ` · ${episode.title}` : ''}</p>
         {episode.description && <p className="text-white/80 text-[13px] leading-snug mt-1.5 line-clamp-2">{episode.description}</p>}
@@ -141,10 +160,8 @@ function EpisodeCard({
         </div>
       )}
 
-      {playable && active && (
-        <div className="absolute left-0 right-0 bottom-0 z-[2] h-0.5 bg-white/15">
-          <div className="h-full bg-brand-red transition-[width] duration-300 ease-linear" style={{ width: `${progress * 100}%` }} />
-        </div>
+      {playable && active && !done && (
+        <ScrubBar video={videoEl} progress={progress} className="left-0 right-0 bottom-0" onTouch={poke} />
       )}
     </div>
   )
@@ -168,6 +185,7 @@ function WatchInner({ slug }: { slug: string }) {
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [arrivedByAutoplay, setArrivedByAutoplay] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [chromeVisible, setChromeVisible] = useState(true)
   const [autoUnlock, setAutoUnlockState] = useState(false)
   const [gaveUp, setGaveUp] = useState(false)
   const autoplayNav = useRef(false)
@@ -301,6 +319,9 @@ function WatchInner({ slug }: { slug: string }) {
                 isLast={i === episodes.length - 1}
                 nextAvailable={ep.episode_number < series.total_episodes}
                 onReplay={() => { /* local to the card */ }}
+                onOpenPicker={() => setPickerOpen(true)}
+                onUiVisible={setChromeVisible}
+                total={series.total_episodes}
               />
             )}
           </section>
@@ -316,7 +337,7 @@ function WatchInner({ slug }: { slug: string }) {
       {/* Quiet chrome: back, episode counter, sound */}
       {series && activeEpisode && (
         <>
-          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-3 md:px-6 pointer-events-none bg-gradient-to-b from-black/50 to-transparent">
+          <div className={`absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-3 md:px-6 pointer-events-none bg-gradient-to-b from-black/50 to-transparent transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 [&_a]:pointer-events-none [&_button]:pointer-events-none'}`}>
             <button
               onClick={() => (window.history.length > 1 ? router.back() : router.push('/'))}
               aria-label="Back"
@@ -324,16 +345,13 @@ function WatchInner({ slug }: { slug: string }) {
             >
               <ArrowLeft size={20} className="text-white" />
             </button>
-            <button onClick={() => setPickerOpen(true)} className="pointer-events-auto bg-black/40 backdrop-blur text-white text-xs font-bold px-3 py-2 rounded-full">
-              EP {activeEpisode.episode_number} / {series.total_episodes} ▾
-            </button>
             <button onClick={() => setMuted(m => !m)} aria-label={muted ? 'Unmute' : 'Mute'} className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center">
               {muted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
             </button>
           </div>
 
           {/* Side rail */}
-          <div className="absolute right-3 bottom-28 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-5">
+          <div className={`absolute right-3 bottom-28 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-5 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button onClick={() => toggleSave.mutate(series.id)} aria-label={saved ? 'Remove from My List' : 'Add to My List'} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
               <span className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur ${saved ? 'bg-brand-red' : 'bg-black/45'}`}>
                 {saved ? <Check size={20} className="text-white" /> : <Bookmark size={20} className="text-white" />}
@@ -345,7 +363,7 @@ function WatchInner({ slug }: { slug: string }) {
           </div>
 
           {/* Desktop up/down */}
-          <div className="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-10">
+          <div className={`hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-10 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button onClick={() => go(-1)} disabled={active === 0} aria-label="Previous episode" className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur border border-white/10 flex items-center justify-center disabled:opacity-30">
               <ChevronUp size={20} className="text-white" />
             </button>

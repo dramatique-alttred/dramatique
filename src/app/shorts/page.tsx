@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import VideoPlayer from '@/components/player/VideoPlayer'
+import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
 import { useSwipeFeed, usePlaybackTicket, useSavedIds, useToggleSave, useSaveProgress } from '@/hooks'
 import { useUIStore } from '@/store/uiStore'
 import { Play, Bookmark, Check, Share2, ChevronUp, ChevronDown, Volume2, VolumeX, Crown, RotateCcw } from '@/components/ui/icons'
@@ -34,6 +35,7 @@ function ShortCard({
   const [ended, setEnded] = useState(false)
   const [countdown, setCountdown] = useState(ADVANCE_AFTER_S)
   const [replayKey, setReplayKey] = useState(0)
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null)
 
   // Leaving a card resets it, so coming back starts clean
   useEffect(() => {
@@ -72,6 +74,7 @@ function ShortCard({
           muted={muted}
           paused={paused || ended}
           onMutedFallback={() => onMutedChange(true)}
+          onVideoRef={setVideoEl}
           onTick={(pos, dur) => setProgress(pos / dur)}
           onProgress={pos => saveProgress.mutate({ episodeId: episode!.id, positionSeconds: pos })}
           onEnded={dur => {
@@ -91,19 +94,9 @@ function ShortCard({
         </div>
       )}
 
-      {/* Tap anywhere to pause / resume */}
+      {/* Tap to pause · press and hold the left / right side for 2x */}
       {playable && !ended && (
-        <button
-          onClick={() => setPaused(p => !p)}
-          aria-label={paused ? 'Play' : 'Pause'}
-          className="absolute inset-0 z-[1] flex items-center justify-center"
-        >
-          {paused && (
-            <span className="w-16 h-16 rounded-full bg-black/45 backdrop-blur flex items-center justify-center animate-scale-in">
-              <Play size={30} fill="white" className="text-white ml-1" />
-            </span>
-          )}
-        </button>
+        <TapHoldLayer video={videoEl} paused={paused} onToggle={() => setPaused(p => !p)} />
       )}
 
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/90 via-black/10 to-black/40" />
@@ -165,11 +158,9 @@ function ShortCard({
         </div>
       )}
 
-      {/* Episode progress */}
-      {playable && (
-        <div className="absolute left-0 right-0 bottom-0 z-[2] h-0.5 bg-white/15 md:mb-0 mb-[4.25rem]">
-          <div className="h-full bg-brand-red transition-[width] duration-300 ease-linear" style={{ width: `${progress * 100}%` }} />
-        </div>
+      {/* Episode progress — touch and drag to scrub */}
+      {playable && !ended && (
+        <ScrubBar video={videoEl} progress={progress} className="left-0 right-0 bottom-0 md:mb-0 mb-[4.25rem]" />
       )}
     </div>
   )

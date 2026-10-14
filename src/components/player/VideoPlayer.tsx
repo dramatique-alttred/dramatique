@@ -25,6 +25,8 @@ interface VideoPlayerProps {
   /** Hide the loading spinner (ambient previews fade in instead) */
   quiet?: boolean
   onPlaying?: () => void
+  /** Hands the <video> element to the parent (for scrubbing / playback speed) */
+  onVideoRef?: (el: HTMLVideoElement | null) => void
 }
 
 const REPORT_EVERY_MS = 10_000
@@ -37,9 +39,15 @@ const REPORT_EVERY_MS = 10_000
 export default function VideoPlayer({
   src, poster, startAt = 0, autoPlay = true, onProgress, onEnded, className = '',
   controls = true, muted = false, paused = false, onTick, onMutedFallback,
-  fit = 'contain', quiet = false, onPlaying,
+  fit = 'contain', quiet = false, onPlaying, onVideoRef,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const onVideoRefRef = useRef(onVideoRef)
+  onVideoRefRef.current = onVideoRef
+  useEffect(() => {
+    onVideoRefRef.current?.(videoRef.current)
+    return () => onVideoRefRef.current?.(null)
+  }, [])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
