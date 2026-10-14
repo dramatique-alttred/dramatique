@@ -61,7 +61,10 @@ export default function ReelPlayer({
   }, [])
 
   return (
-    <div className="absolute inset-0 bg-black">
+    <div
+      className="absolute inset-0 bg-black"
+      onPointerMove={e => { if (e.pointerType !== 'touch') poke() }}
+    >
       <VideoPlayer
         src={src}
         poster={poster}

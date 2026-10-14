@@ -19,7 +19,7 @@ const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
 interface AccessInfo { is_vip?: boolean; can_watch_all?: boolean; unlocked_episode_ids?: string[] }
 
 function EpisodeCard({
-  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, onUiVisible, total,
+  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, onUiVisible, activity, total,
 }: {
   series: SeriesDetail
   episode: Episode
@@ -35,6 +35,8 @@ function EpisodeCard({
   onReplay: () => void
   onOpenPicker: () => void
   onUiVisible: (visible: boolean) => void
+  /** Bumps whenever a mouse moves over the page (desktop) */
+  activity: number
   total: number
 }) {
   const { data: ticket, isError } = usePlaybackTicket(episode.id, !locked && (active || preload))
@@ -64,6 +66,8 @@ function EpisodeCard({
   const playable = !locked && !!ticket && !isError
   const uiVisible = !playable || paused || done || touched
   useEffect(() => { if (active) onUiVisible(uiVisible) }, [active, uiVisible, onUiVisible])
+  // Desktop: moving the mouse reveals the details, just like a touch does
+  useEffect(() => { if (active && activity > 0) poke() }, [activity]) // eslint-disable-line react-hooks/exhaustive-deps
   // A finished episode saves its end as the resume point — replay from the top instead
   const resume = ticket && ticket.duration_seconds && ticket.resume_position_seconds >= ticket.duration_seconds - 3 ? 0 : ticket?.resume_position_seconds ?? 0
 
@@ -186,6 +190,15 @@ function WatchInner({ slug }: { slug: string }) {
   const [arrivedByAutoplay, setArrivedByAutoplay] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [chromeVisible, setChromeVisible] = useState(true)
+  const [activity, setActivity] = useState(0)
+  const lastMove = useRef(0)
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') return // phones already reveal on touch
+    const now = Date.now()
+    if (now - lastMove.current < 150) return
+    lastMove.current = now
+    setActivity(a => a + 1)
+  }
   const [autoUnlock, setAutoUnlockState] = useState(false)
   const [gaveUp, setGaveUp] = useState(false)
   const autoplayNav = useRef(false)
@@ -296,7 +309,7 @@ function WatchInner({ slug }: { slug: string }) {
   }
 
   return (
-    <main className="fixed inset-0 z-[70] bg-black">
+    <main className="fixed inset-0 z-[70] bg-black" onPointerMove={onPointerMove}>
       <div ref={scroller} onScroll={onScroll} className="h-full overflow-y-scroll snap-y snap-mandatory scroll-hide overscroll-contain">
         {series && episodes.map((ep, i) => (
           <section key={ep.id} className="relative h-full w-full snap-start snap-always flex items-start md:items-center justify-center overflow-hidden">
@@ -321,6 +334,7 @@ function WatchInner({ slug }: { slug: string }) {
                 onReplay={() => { /* local to the card */ }}
                 onOpenPicker={() => setPickerOpen(true)}
                 onUiVisible={setChromeVisible}
+                activity={activity}
                 total={series.total_episodes}
               />
             )}
