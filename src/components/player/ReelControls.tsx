@@ -14,13 +14,15 @@ function fmt(seconds: number) {
  * while the visible line stays thin.
  */
 export function ScrubBar({
-  video, progress, className = '',
+  video, progress, className = '', onTouch,
 }: {
   video: HTMLVideoElement | null
   /** 0–1, from the player's timeupdate */
   progress: number
   /** Positioning classes for the bar (e.g. `left-0 right-0 bottom-0`) */
   className?: string
+  /** Called when the bar is touched, so the player can reveal its overlay */
+  onTouch?: () => void
 }) {
   const track = useRef<HTMLDivElement>(null)
   const [dragFrac, setDragFrac] = useState<number | null>(null)
@@ -36,6 +38,7 @@ export function ScrubBar({
 
   const onDown = (e: React.PointerEvent) => {
     e.stopPropagation()
+    onTouch?.()
     if (!video) return
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     wasPlaying.current = !video.paused
@@ -105,12 +108,14 @@ const SIDE = 0.34 // left / right third of the picture
  * Vertical swipes still scroll the feed (touch-action: pan-y).
  */
 export function TapHoldLayer({
-  video, paused, onToggle, className = '',
+  video, paused, onToggle, className = '', onTouch,
 }: {
   video: HTMLVideoElement | null
   paused: boolean
   onToggle: () => void
   className?: string
+  /** Called on any touch, so the player can reveal its overlay for a moment */
+  onTouch?: () => void
 }) {
   const [fast, setFast] = useState<'left' | 'right' | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -127,6 +132,7 @@ export function TapHoldLayer({
   useEffect(() => { held.current = false; setFast(null) }, [video])
 
   const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    onTouch?.()
     active.current = true
     held.current = false
     const r = e.currentTarget.getBoundingClientRect()
