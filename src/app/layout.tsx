@@ -31,6 +31,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Google AdSense site verification / ad loader */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3116183919323971"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="bg-brand-black text-brand-text antialiased">
         <Providers>
           <ToastProvider>
