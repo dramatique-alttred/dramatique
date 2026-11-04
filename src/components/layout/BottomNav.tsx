@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Film, Compass, BookMarked, User } from '@/components/ui/icons'
+import { Home, Film, Crown, BookMarked, User } from '@/components/ui/icons'
 
 const NAV = [
   { href: '/',           icon: Home,       label: 'Home' },
   { href: '/shorts',     icon: Film,       label: 'Shorts' },
-  { href: '/categories', icon: Compass,    label: 'Browse' },
+  { href: '/vip',        icon: Crown,      label: 'Member' },
   { href: '/my-list',    icon: BookMarked, label: 'My List' },
   { href: '/profile',    icon: User,       label: 'Profile' },
 ]

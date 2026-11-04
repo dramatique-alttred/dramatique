@@ -5,6 +5,8 @@
 // Per-icon imports keep bundles small (no 1,500-icon barrel).
 import { forwardRef } from 'react'
 import type { Icon as PhosphorIcon, IconProps, IconWeight } from '@phosphor-icons/react/dist/lib/types'
+import { AppleLogoIcon } from '@phosphor-icons/react/dist/csr/AppleLogo'
+import { ListBulletsIcon } from '@phosphor-icons/react/dist/csr/ListBullets'
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise'
 import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft'
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/csr/ArrowRight'
@@ -184,6 +186,8 @@ export const Smartphone = make(DeviceMobileIcon, 'Smartphone')
 export const Sparkles = make(SparkleIcon, 'Sparkles')
 export const Star = make(StarIcon, 'Star')
 export const Tag = make(TagIcon, 'Tag')
+export const AppleLogo = make(AppleLogoIcon, 'AppleLogo')
+export const ListBullets = make(ListBulletsIcon, 'ListBullets')
 export const Trash2 = make(TrashIcon, 'Trash2')
 export const TrendingUp = make(TrendUpIcon, 'TrendingUp')
 export const Upload = make(UploadSimpleIcon, 'Upload')
