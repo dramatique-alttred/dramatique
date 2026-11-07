@@ -9,14 +9,14 @@ import type { Episode, SeriesDetail } from '@/types'
 
 const PAGE = 30
 
-/** Equalizer bars that dance on the episode that is playing (still when the viewer prefers reduced motion) */
+/** A red sound wave that ripples from the middle outwards on the episode that is playing (still for reduced motion) */
 function NowPlaying() {
+  const delays = ['0s', '0.15s', '0.3s', '0.45s', '0.6s']
   return (
-    <span className="absolute left-3 bottom-2 flex items-end gap-[2.5px] h-[11px]" role="img" aria-label="Now playing">
-      <span className="eq-bar" style={{ animationDuration: '0.9s', animationDelay: '-0.2s' }} />
-      <span className="eq-bar" style={{ animationDuration: '0.7s', animationDelay: '-0.5s' }} />
-      <span className="eq-bar" style={{ animationDuration: '1.1s', animationDelay: '-0.1s' }} />
-      <span className="eq-bar" style={{ animationDuration: '0.8s', animationDelay: '-0.7s' }} />
+    <span className="absolute left-1/2 -translate-x-1/2 bottom-1.5 flex items-center gap-[3px] h-4" role="img" aria-label="Now playing">
+      {delays.map((d, i) => (
+        <span key={i} className="wave-bar" style={{ animationDelay: d, height: i === 2 ? '100%' : i % 2 ? '80%' : '55%' }} />
+      ))}
     </span>
   )
 }
@@ -96,7 +96,7 @@ export default function EpisodeSheet({
                     <button
                       key={ep.id}
                       onClick={() => onJump(idx)}
-                      className={`relative aspect-square rounded-lg flex items-center justify-center text-sm font-bold text-white active:scale-95 transition ${current ? 'bg-white/30 pb-3' : 'bg-white/10 hover:bg-white/15'}`}
+                      className={`relative aspect-square rounded-lg flex items-center justify-center text-sm font-bold text-white active:scale-95 transition ${current ? 'bg-brand-red/25 ring-1 ring-brand-red/70 pb-4' : 'bg-white/10 hover:bg-white/15'}`}
                     >
                       {ep.episode_number}
                       {current && <NowPlaying />}
