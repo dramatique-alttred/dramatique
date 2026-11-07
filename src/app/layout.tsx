@@ -4,6 +4,7 @@ import { ToastProvider } from '@/components/ui/Toast'
 import Providers from '@/components/Providers'
 import ConsumerChrome from '@/components/layout/ConsumerChrome'
 import PwaManager from '@/components/pwa/PwaManager'
+import Analytics from '@/components/Analytics'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dramatique-shorts.vercel.app'
 const TITLE = 'Dramatique — Short Dramas. Big Emotions. Endless Stories.'
@@ -39,11 +40,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin="anonymous"
         />
       </head>
+      <head>
+        {/* Chrome can fire beforeinstallprompt before React mounts; keep it for PwaManager */}
+        <script dangerouslySetInnerHTML={{ __html: "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__dqInstall=e})" }} />
+      </head>
       <body className="bg-brand-black text-brand-text antialiased">
         <Providers>
           <ToastProvider>
             <ConsumerChrome>{children}</ConsumerChrome>
             <PwaManager />
+            <Analytics />
           </ToastProvider>
         </Providers>
       </body>

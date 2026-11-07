@@ -20,6 +20,17 @@ interface PwaState {
   install: () => Promise<boolean>
 }
 
+/**
+ * onClick for any "Download / Install app" link: where the browser can install
+ * the app natively it opens that dialog right away, otherwise the link goes on
+ * to /download (which explains how for this device).
+ */
+export function installOrContinue(e: { preventDefault: () => void }) {
+  if (!usePwaStore.getState().installEvent) return
+  e.preventDefault()
+  void usePwaStore.getState().install()
+}
+
 export const usePwaStore = create<PwaState>()((set, get) => ({
   installEvent: null,
   isStandalone: false,

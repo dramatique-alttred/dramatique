@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Search, Globe, Smartphone, LogIn, ChevronDown, X, Menu } from '@/components/ui/icons'
 import { LANGUAGES, GENRES } from '@/types'
+import { installOrContinue } from '@/store/pwaStore'
 import LoginModal from '@/components/ui/LoginModal'
 import { useAuthStore } from '@/store/authStore'
 import { signOut } from '@/lib/auth'
@@ -123,7 +124,7 @@ export default function Navbar() {
               </button>
               <DailyRewardButton onSignIn={() => setLoginOpen(true)} />
               <div className="hidden md:block"><LanguageDropdown /></div>
-              <Link href="/download" className="hidden lg:flex items-center gap-1.5 bg-white text-black hover:bg-gray-100 font-bold px-5 py-2 rounded-md transition-colors text-sm">
+              <Link href="/download" onClick={installOrContinue} className="hidden lg:flex items-center gap-1.5 bg-white text-black hover:bg-gray-100 font-bold px-5 py-2 rounded-md transition-colors text-sm">
                 <Smartphone size={14} /> Download App
               </Link>
               {isLoggedIn ? (
@@ -173,7 +174,7 @@ export default function Navbar() {
 
             {/* BOTTOM ACTIONS */}
             <div className="mt-auto p-4 border-t border-brand-border flex flex-col gap-3">
-              <Link href="/download" onClick={() => setMobileOpen(false)}
+              <Link href="/download" onClick={e => { setMobileOpen(false); installOrContinue(e) }}
                 className="flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-100 font-bold px-5 py-3 rounded-xl transition-colors text-sm">
                 <Smartphone size={16} /> Download App
               </Link>

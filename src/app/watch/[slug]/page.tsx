@@ -10,6 +10,8 @@ import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
 import { usePlaybackTicket, useSeriesDetail, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
 import { useUIStore } from '@/store/uiStore'
+import { installOrContinue } from '@/store/pwaStore'
+import { track } from '@/lib/analytics'
 import { Play, Lock, Bookmark, Check, Share2, ArrowLeft, Volume2, VolumeX, RotateCcw, ChevronUp, ChevronDown, ListBullets, Crown, Download } from '@/components/ui/icons'
 import type { Episode, SeriesDetail } from '@/types'
 
@@ -274,6 +276,9 @@ function WatchInner({ slug }: { slug: string }) {
   // When the viewer lands on a locked episode: auto-unlock if they opted in and
   // can afford it, otherwise show the paywall — the only interruption there is.
   const activeEpisode = active !== null ? episodes[active] : undefined
+  useEffect(() => {
+    if (series && activeEpisode) track('episode_view', { series: series.slug, episode: activeEpisode.episode_number })
+  }, [series?.slug, activeEpisode?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const lockedActive = !!activeEpisode && isLocked(activeEpisode)
   const handledFor = useRef<string | null>(null)
   useEffect(() => {
@@ -301,6 +306,7 @@ function WatchInner({ slug }: { slug: string }) {
   const saved = !!series && savedIds.includes(series.id)
   const share = async () => {
     if (!series) return
+    track('share_clicked', { series: series.slug })
     const url = `${window.location.origin}/watch/${series.slug}`
     try {
       if (navigator.share) await navigator.share({ title: series.title, text: `Watch ${series.title} on Dramatique`, url })
@@ -367,7 +373,7 @@ function WatchInner({ slug }: { slug: string }) {
 
           {/* Side rail */}
           <div className={`absolute right-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1.5rem)] md:bottom-10 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-4 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <button onClick={() => toggleSave.mutate(series.id)} aria-label={saved ? 'Remove from My List' : 'Add to My List'} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
+            <button onClick={() => { track('save_toggled', { series: series.slug, saved: !saved }); toggleSave.mutate(series.id) }} aria-label={saved ? 'Remove from My List' : 'Add to My List'} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
               <span className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur ${saved ? 'bg-brand-red' : 'bg-black/45'}`}>
                 {saved ? <Check size={20} className="text-white" /> : <Bookmark size={20} className="text-white" />}
               </span>
@@ -388,7 +394,7 @@ function WatchInner({ slug }: { slug: string }) {
             <Link href="/vip" className="flex items-center gap-1.5 bg-brand-gold/90 text-black text-xs font-bold px-3.5 py-2 rounded-full active:scale-95 transition-transform">
               <Crown size={14} weight="fill" /> Join membership
             </Link>
-            <Link href="/download" className="flex items-center gap-1.5 text-white text-sm font-semibold active:scale-95 transition-transform">
+            <Link href="/download" onClick={installOrContinue} className="flex items-center gap-1.5 text-white text-sm font-semibold active:scale-95 transition-transform">
               <Download size={16} /> Download
             </Link>
           </div>
