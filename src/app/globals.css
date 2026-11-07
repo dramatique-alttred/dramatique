@@ -58,3 +58,20 @@
   /* Staggered reveal helper — set --i on children */
   .stagger > * { opacity: 0; animation: slideUpSm 0.5s cubic-bezier(0.16,1,0.3,1) forwards; animation-delay: calc(var(--i, 0) * 60ms); }
 }
+
+/* Sound wave (episode sheet: "now playing") — bars grow and shrink around their middle, in a rolling pattern */
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.55); opacity: 0.75; }
+  50%      { transform: scaleY(1.1); opacity: 1; }
+}
+.wave-bar {
+  display: block;
+  width: 3px;
+  border-radius: 9999px;
+  background: #E8001D;
+  transform-origin: center;
+  animation: wave-bar 1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wave-bar { animation: none; }
+}

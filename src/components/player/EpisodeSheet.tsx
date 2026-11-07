@@ -9,13 +9,14 @@ import type { Episode, SeriesDetail } from '@/types'
 
 const PAGE = 30
 
-/** Three little bars that mark the episode that is playing */
+/** A red sound wave that ripples from the middle outwards on the episode that is playing (still for reduced motion) */
 function NowPlaying() {
+  const delays = ['0s', '0.15s', '0.3s', '0.45s', '0.6s']
   return (
-    <span className="absolute left-2.5 bottom-2 flex items-end gap-[2px] h-3" aria-label="Now playing">
-      <span className="w-[3px] h-2 rounded-sm bg-white" />
-      <span className="w-[3px] h-3 rounded-sm bg-white" />
-      <span className="w-[3px] h-1.5 rounded-sm bg-white" />
+    <span className="absolute left-1/2 -translate-x-1/2 bottom-1.5 flex items-center gap-[3px] h-4" role="img" aria-label="Now playing">
+      {delays.map((d, i) => (
+        <span key={i} className="wave-bar" style={{ animationDelay: d, height: i === 2 ? '100%' : i % 2 ? '80%' : '55%' }} />
+      ))}
     </span>
   )
 }
@@ -44,7 +45,7 @@ export default function EpisodeSheet({
   const tags = [series.genre, ...(series.tags ?? [])].filter(Boolean)
 
   const tabClass = (t: typeof tab) =>
-    `text-xl font-bold transition-colors ${tab === t ? 'text-white' : 'text-white/40'}`
+    `text-lg font-bold transition-colors ${tab === t ? 'text-white' : 'text-brand-subtle'}`
 
   return (
     <div className="absolute inset-0 z-20 bg-black/40 flex items-end md:items-center justify-center animate-fade-in" onClick={onClose}>
@@ -63,8 +64,8 @@ export default function EpisodeSheet({
             <Image src={series.thumbnail_url} alt="" fill sizes="68px" className="object-cover" />
           </div>
           <div className="min-w-0">
-            <p className="text-white font-semibold text-lg leading-snug line-clamp-2">{series.title}</p>
-            <p className="text-white/50 text-sm mt-0.5">{series.total_episodes} episodes · {series.genre}</p>
+            <p className="text-white font-bold text-base leading-snug line-clamp-2">{series.title}</p>
+            <p className="text-brand-subtle text-xs mt-0.5">{series.total_episodes} episodes · {series.genre}</p>
           </div>
         </div>
 
@@ -80,7 +81,7 @@ export default function EpisodeSheet({
               {pages > 1 && (
                 <div className="flex gap-6 mb-4">
                   {Array.from({ length: pages }, (_, i) => (
-                    <button key={i} onClick={() => setRange(i)} className={`text-base font-semibold ${range === i ? 'text-white' : 'text-white/40'}`}>
+                    <button key={i} onClick={() => setRange(i)} className={`text-sm font-semibold ${range === i ? 'text-white' : 'text-brand-subtle'}`}>
                       {i * PAGE + 1}-{Math.min((i + 1) * PAGE, episodes.length)}
                     </button>
                   ))}
@@ -95,7 +96,7 @@ export default function EpisodeSheet({
                     <button
                       key={ep.id}
                       onClick={() => onJump(idx)}
-                      className={`relative aspect-square rounded-lg flex items-center justify-center text-lg font-semibold text-white active:scale-95 transition ${current ? 'bg-white/30' : 'bg-white/10 hover:bg-white/15'}`}
+                      className={`relative aspect-square rounded-lg flex items-center justify-center text-sm font-bold text-white active:scale-95 transition ${current ? 'bg-brand-red/25 ring-1 ring-brand-red/70 pb-4' : 'bg-white/10 hover:bg-white/15'}`}
                     >
                       {ep.episode_number}
                       {current && <NowPlaying />}
@@ -107,27 +108,27 @@ export default function EpisodeSheet({
             </>
           ) : (
             <>
-              <p className={`text-white/80 text-[15px] leading-relaxed ${expanded ? '' : 'line-clamp-3'}`}>{series.synopsis}</p>
+              <p className={`text-brand-text text-sm leading-relaxed ${expanded ? '' : 'line-clamp-3'}`}>{series.synopsis}</p>
               {series.synopsis && series.synopsis.length > 140 && (
-                <button onClick={() => setExpanded(v => !v)} className="text-white text-sm font-semibold mt-1 inline-flex items-center gap-1">
+                <button onClick={() => setExpanded(v => !v)} className="text-white text-xs font-semibold mt-1 inline-flex items-center gap-1">
                   {expanded ? 'Less' : 'More'} {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
               )}
 
               <div className="flex flex-wrap gap-2 mt-4">
-                {tags.map(t => <span key={t} className="text-white/70 text-sm bg-white/10 rounded-md px-3 py-1.5">{t}</span>)}
+                {tags.map(t => <span key={t} className="text-brand-text text-xs font-medium bg-white/10 rounded-md px-3 py-1.5">{t}</span>)}
               </div>
 
               {more.length > 0 && (
                 <>
-                  <h3 className="text-white font-bold text-xl mt-7 mb-3">More Like This</h3>
+                  <h3 className="text-white font-bold text-lg mt-7 mb-3">More Like This</h3>
                   <div className="flex gap-3 overflow-x-auto scroll-hide pb-1">
                     {more.slice(0, 8).map(s => (
                       <Link key={s.id} href={`/watch/${s.slug}`} className="flex-shrink-0 w-[104px]">
                         <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-black/40">
                           <Image src={s.thumbnail_url} alt={s.title} fill sizes="104px" className="object-cover" />
                         </div>
-                        <p className="text-white/80 text-xs mt-1.5 line-clamp-2 leading-snug">{s.title}</p>
+                        <p className="text-brand-text text-xs font-medium mt-1.5 line-clamp-2 leading-snug">{s.title}</p>
                       </Link>
                     ))}
                   </div>
