@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+export const metadata = { title: 'Blog', description: 'Drama guides, rankings, and stories from the Dramatique team.' }
+
 const POSTS = [
   { slug: 'top-10-ceo-romance-series', title: 'Top 10 CEO Romance Series You Can\'t Stop Watching', excerpt: 'From billionaire contracts to fake marriages — these series will keep you up all night.', category: 'CEO Romance', date: '14 Aug 2026', readTime: '5 min', image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=400&fit=crop', featured: true },
   { slug: 'best-revenge-dramas-2026', title: 'Best Revenge Dramas of 2026 — Ranked', excerpt: 'She came back stronger. These revenge arcs will leave you cheering at every twist.', category: 'Revenge', date: '12 Aug 2026', readTime: '4 min', image: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=800&h=400&fit=crop', featured: false },

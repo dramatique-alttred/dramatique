@@ -12,7 +12,8 @@ const DESCRIPTION = 'Stream the best micro-drama series. CEO Romance, Supernatur
 export const metadata: Metadata = {
   // Makes the share image and canonical links absolute for social crawlers
   metadataBase: new URL(SITE_URL),
-  title: TITLE,
+  // Per-page titles come out as "<page> | Dramatique"; the home page keeps the full tagline
+  title: { default: TITLE, template: '%s | Dramatique' },
   description: DESCRIPTION,
   applicationName: 'Dramatique',
   // The share image comes from app/opengraph-image.png and app/twitter-image.png

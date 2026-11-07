@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+export const metadata = { title: 'Refund Policy' }
+
 export default function RefundPage() {
   return (
     <main className="min-h-screen bg-brand-black pt-20 pb-24 md:pb-12">

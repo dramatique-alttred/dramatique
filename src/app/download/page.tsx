@@ -1,6 +1,8 @@
 import { Monitor, AppleLogo } from '@/components/ui/icons'
 import InstallCard from '@/components/pwa/InstallCard'
 
+export const metadata = { title: 'Get the App', description: 'Install Dramatique on your phone, tablet or desktop.' }
+
 const FEATURES = [
   { icon: '📺', title: 'Watch Anywhere', desc: 'Stream on your phone, tablet, or desktop' },
   { icon: '🔔', title: 'New Episode Alerts', desc: 'Never miss a drop with push notifications' },

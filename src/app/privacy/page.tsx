@@ -1,3 +1,5 @@
+
+export const metadata = { title: 'Privacy Policy' }
 export default function PrivacyPage() {
   const sections = [
     { title: 'Information We Collect', content: 'We collect information you provide directly: name, phone number, email address, and payment information. We also collect usage data including watch history, search queries, and device information to improve your experience.' },
