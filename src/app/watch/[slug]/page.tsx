@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import VideoPlayer from '@/components/player/VideoPlayer'
+import EpisodeSheet from '@/components/player/EpisodeSheet'
 import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
 import { usePlaybackTicket, useSeriesDetail, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
@@ -140,7 +141,7 @@ function EpisodeCard({
       )}
 
       {/* Story info — minimal, never covers the picture */}
-      <div className={`absolute left-0 right-16 bottom-0 z-[2] p-4 pb-8 md:pb-6 pointer-events-none transition-opacity duration-300 ${uiVisible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute left-0 right-16 bottom-0 z-[2] p-4 pb-14 md:pb-6 pointer-events-none transition-opacity duration-300 ${uiVisible ? 'opacity-100' : 'opacity-0'}`}>
         <h2 className="text-white font-bold text-lg leading-tight drop-shadow">{series.title}</h2>
         <p className="text-white/70 text-xs mt-0.5">Episode {episode.episode_number} of {series.total_episodes}{episode.title ? ` · ${episode.title}` : ''}</p>
         {episode.description && <p className="text-white/80 text-[13px] leading-snug mt-1.5 line-clamp-2">{episode.description}</p>}
@@ -366,7 +367,7 @@ function WatchInner({ slug }: { slug: string }) {
           </div>
 
           {/* Side rail */}
-          <div className={`absolute right-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1.5rem)] md:bottom-10 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-4 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`absolute right-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+2.5rem)] md:bottom-10 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-4 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button onClick={() => toggleSave.mutate(series.id)} aria-label={saved ? 'Remove from My List' : 'Add to My List'} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
               <span className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur ${saved ? 'bg-brand-red' : 'bg-black/45'}`}>
                 {saved ? <Check size={20} className="text-white" /> : <Bookmark size={20} className="text-white" />}
@@ -405,25 +406,9 @@ function WatchInner({ slug }: { slug: string }) {
         </>
       )}
 
-      {/* Episode picker */}
+      {/* Episode sheet: Synopsis / Episodes */}
       {pickerOpen && series && (
-        <div className="absolute inset-0 z-20 bg-black/70 flex items-end md:items-center justify-center" onClick={() => setPickerOpen(false)}>
-          <div onClick={e => e.stopPropagation()} className="w-full md:max-w-md max-h-[70vh] overflow-y-auto bg-brand-card rounded-t-2xl md:rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white font-bold text-sm">Episodes</h3>
-              <Link href={`/series/${series.slug}`} className="text-brand-subtle hover:text-white text-xs font-semibold transition-colors">Series details →</Link>
-            </div>
-            <div className="grid grid-cols-6 gap-2">
-              {episodes.map((ep, i) => (
-                <button key={ep.id} onClick={() => jumpTo(i)}
-                  className={`aspect-square rounded-lg text-xs font-bold flex items-center justify-center border relative ${i === active ? 'bg-brand-red border-brand-red text-white' : isLocked(ep) ? 'bg-brand-card border-brand-border text-brand-muted' : 'bg-green-500/5 border-green-500/20 text-brand-text'}`}>
-                  {ep.episode_number}
-                  {isLocked(ep) && i !== active && <Lock size={8} className="text-brand-gold/70 absolute top-1 right-1" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <EpisodeSheet series={series} episodes={episodes} active={active ?? 0} isLocked={isLocked} onJump={jumpTo} onClose={() => setPickerOpen(false)} />
       )}
 
       {series && activeEpisode && (
