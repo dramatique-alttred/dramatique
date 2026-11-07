@@ -58,3 +58,22 @@
   /* Staggered reveal helper — set --i on children */
   .stagger > * { opacity: 0; animation: slideUpSm 0.5s cubic-bezier(0.16,1,0.3,1) forwards; animation-delay: calc(var(--i, 0) * 60ms); }
 }
+
+/* Equalizer bars (episode sheet: "now playing") */
+@keyframes eq-bar {
+  0%   { transform: scaleY(0.25); }
+  50%  { transform: scaleY(1); }
+  100% { transform: scaleY(0.45); }
+}
+.eq-bar {
+  display: block;
+  width: 2.5px;
+  height: 100%;
+  border-radius: 1px;
+  background: #fff;
+  transform-origin: bottom;
+  animation: eq-bar 0.9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eq-bar { animation: none; transform: scaleY(0.7); }
+}
