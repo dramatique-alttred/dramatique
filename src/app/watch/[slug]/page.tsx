@@ -7,13 +7,15 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import PaywallModal from '@/components/monetisation/PaywallModal'
 import VideoPlayer from '@/components/player/VideoPlayer'
 import EpisodeSheet from '@/components/player/EpisodeSheet'
+import PlaybackSettings, { speedLabel } from '@/components/player/PlaybackSettings'
+import type { QualityApi } from '@/components/player/VideoPlayer'
 import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
 import { usePlaybackTicket, useSeriesDetail, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
 import { useUIStore } from '@/store/uiStore'
 import { installOrContinue } from '@/store/pwaStore'
 import { track } from '@/lib/analytics'
-import { Play, Lock, Bookmark, Check, Share2, ArrowLeft, Volume2, VolumeX, RotateCcw, ChevronUp, ChevronDown, ListBullets, Crown, Download } from '@/components/ui/icons'
+import { Play, Lock, Bookmark, Check, Share2, ArrowLeft, Volume2, VolumeX, RotateCcw, ChevronUp, ChevronDown, ListBullets, Crown, Download, Gauge, MoreVertical } from '@/components/ui/icons'
 import type { Episode, SeriesDetail } from '@/types'
 
 // Same key the series page uses — opting in once applies to every binge
@@ -22,7 +24,7 @@ const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
 interface AccessInfo { is_vip?: boolean; can_watch_all?: boolean; unlocked_episode_ids?: string[] }
 
 function EpisodeCard({
-  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, onUiVisible, activity, total,
+  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, onUiVisible, activity, total, soundLocked, onSoundBlocked, onSoundUnlock, speed, qualityChoice, onMedia,
 }: {
   series: SeriesDetail
   episode: Episode
@@ -41,6 +43,15 @@ function EpisodeCard({
   /** Bumps whenever a mouse moves over the page (desktop) */
   activity: number
   total: number
+  /** The browser refused sound-on autoplay: the first tap switches sound on instead of pausing */
+  soundLocked: boolean
+  onSoundBlocked: () => void
+  onSoundUnlock: () => void
+  /** Playback Settings: speed and pinned quality apply to every episode */
+  speed: number
+  qualityChoice: 'auto' | number
+  /** The active card reports its video + quality controls for the settings sheet */
+  onMedia: (m: { video: HTMLVideoElement | null; quality: QualityApi | null }) => void
 }) {
   const { data: ticket, isError } = usePlaybackTicket(episode.id, !locked && (active || preload))
   const saveProgress = useSaveProgress()
@@ -49,6 +60,21 @@ function EpisodeCard({
   const [done, setDone] = useState(false)
   const [replayKey, setReplayKey] = useState(0)
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null)
+  const [quality, setQuality] = useState<QualityApi | null>(null)
+  useEffect(() => { if (active) onMedia({ video: videoEl, quality }) }, [active, videoEl, quality]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The chosen speed / quality follow the viewer from episode to episode
+  useEffect(() => {
+    if (!videoEl) return
+    const apply = () => { videoEl.playbackRate = speed }
+    apply()
+    videoEl.addEventListener('loadedmetadata', apply)
+    return () => videoEl.removeEventListener('loadedmetadata', apply)
+  }, [videoEl, speed, quality])
+  useEffect(() => {
+    if (!quality) return
+    if (qualityChoice === 'auto') quality.setAuto()
+    else quality.setHeight(qualityChoice)
+  }, [quality, qualityChoice])
   // While the episode plays the picture is left completely clean; the details
   // come back when the viewer pauses or touches the screen
   const [touched, setTouched] = useState(false)
@@ -88,8 +114,9 @@ function EpisodeCard({
           muted={muted}
           paused={!active || paused || done}
           quiet={!active}
-          onMutedFallback={() => onMutedChange(true)}
+          onMutedFallback={() => { onMutedChange(true); onSoundBlocked() }}
           onVideoRef={setVideoEl}
+          onQuality={setQuality}
           onTick={(pos, dur) => { if (active) setProgress(pos / dur) }}
           onProgress={pos => { if (active) saveProgress.mutate({ episodeId: episode.id, positionSeconds: pos }) }}
           onEnded={dur => {
@@ -112,7 +139,7 @@ function EpisodeCard({
 
       {/* Tap to pause · press and hold the left / right side for 2x */}
       {playable && active && !done && (
-        <TapHoldLayer video={videoEl} paused={paused} onToggle={() => setPaused(p => !p)} onTouch={poke} />
+        <TapHoldLayer video={videoEl} paused={paused} baseRate={speed} onToggle={() => (soundLocked ? onSoundUnlock() : setPaused(p => !p))} onTouch={poke} />
       )}
 
       {/* Episode chip + picker: only while paused, so it never sits on the picture */}
@@ -189,9 +216,16 @@ function WatchInner({ slug }: { slug: string }) {
   const scroller = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState<number | null>(null)
   const [muted, setMuted] = useState(false)
+  // Set when the browser blocked sound-on autoplay (e.g. a shared link opened with no tap first)
+  const [soundLocked, setSoundLocked] = useState(false)
+  const unlockSound = useCallback(() => { setMuted(false); setSoundLocked(false) }, [])
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [arrivedByAutoplay, setArrivedByAutoplay] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [settings, setSettings] = useState<null | 'main' | 'speed'>(null)
+  const [speed, setSpeed] = useState(1)
+  const [qualityChoice, setQualityChoice] = useState<'auto' | number>('auto')
+  const [media, setMedia] = useState<{ video: HTMLVideoElement | null; quality: QualityApi | null }>({ video: null, quality: null })
   const [chromeVisible, setChromeVisible] = useState(true)
   const [activity, setActivity] = useState(0)
   const lastMove = useRef(0)
@@ -333,6 +367,12 @@ function WatchInner({ slug }: { slug: string }) {
                 preload={i === active + 1}
                 muted={muted}
                 onMutedChange={setMuted}
+                soundLocked={soundLocked}
+                onSoundBlocked={() => setSoundLocked(true)}
+                onSoundUnlock={unlockSound}
+                speed={speed}
+                qualityChoice={qualityChoice}
+                onMedia={setMedia}
                 onFinished={() => {
                   if (i < episodes.length - 1) { autoplayNav.current = true; go(1) }
                 }}
@@ -367,10 +407,28 @@ function WatchInner({ slug }: { slug: string }) {
             >
               <ArrowLeft size={20} className="text-white" />
             </button>
-            <button onClick={() => setMuted(m => !m)} aria-label={muted ? 'Unmute' : 'Mute'} className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center">
-              {muted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
-            </button>
+            <div className="pointer-events-none flex items-center gap-2">
+              <button onClick={() => { setSoundLocked(false); setMuted(m => !m) }} aria-label={muted ? 'Unmute' : 'Mute'} className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center">
+                {muted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
+              </button>
+              <button onClick={() => setSettings('speed')} aria-label="Playback speed" className="pointer-events-auto h-10 px-3 rounded-full bg-black/40 backdrop-blur flex items-center gap-1.5 text-white text-xs font-semibold">
+                <Gauge size={16} /> {speed === 1 ? 'Speed' : speedLabel(speed)}
+              </button>
+              <button onClick={() => setSettings('main')} aria-label="Playback settings" className="pointer-events-auto w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center">
+                <MoreVertical size={20} className="text-white" />
+              </button>
+            </div>
           </div>
+
+          {/* Shown whenever the browser forced muted playback — stays visible during clean playback */}
+          {soundLocked && (
+            <button
+              onClick={unlockSound}
+              className="absolute top-16 left-1/2 -translate-x-1/2 z-[12] flex items-center gap-2 bg-black/65 backdrop-blur text-white text-xs font-semibold px-4 py-2.5 rounded-full border border-white/20 animate-fade-in active:scale-95 transition-transform"
+            >
+              <VolumeX size={16} /> Tap to turn sound on
+            </button>
+          )}
 
           {/* Side rail */}
           <div className={`absolute right-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+2.5rem)] md:bottom-10 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-4 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
@@ -410,6 +468,20 @@ function WatchInner({ slug }: { slug: string }) {
             </button>
           </div>
         </>
+      )}
+
+      {/* Playback Settings: quality · speed · picture-in-picture */}
+      {settings && (
+        <PlaybackSettings
+          initial={settings}
+          video={media.video}
+          quality={media.quality}
+          qualityChoice={qualityChoice}
+          onQualityChoice={setQualityChoice}
+          speed={speed}
+          onSpeed={setSpeed}
+          onClose={() => setSettings(null)}
+        />
       )}
 
       {/* Episode sheet: Synopsis / Episodes */}

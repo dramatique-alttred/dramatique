@@ -3,6 +3,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2, AlertTriangle } from '@/components/ui/icons'
 
+/** What the settings sheet needs from the adaptive player */
+export interface QualityApi {
+  /** Available picture heights (e.g. 1080, 720, 540), best first */
+  heights(): number[]
+  /** Height currently on screen */
+  activeHeight(): number | null
+  /** True while the player is choosing quality by itself */
+  isAuto(): boolean
+  setAuto(): void
+  setHeight(height: number): void
+}
+
 interface VideoPlayerProps {
   src: string                 // HLS master playlist
   poster?: string
@@ -27,6 +39,8 @@ interface VideoPlayerProps {
   onPlaying?: () => void
   /** Hands the <video> element to the parent (for scrubbing / playback speed) */
   onVideoRef?: (el: HTMLVideoElement | null) => void
+  /** Hands the quality controls to the parent once the stream has loaded */
+  onQuality?: (api: QualityApi | null) => void
 }
 
 const REPORT_EVERY_MS = 10_000
@@ -39,10 +53,12 @@ const REPORT_EVERY_MS = 10_000
 export default function VideoPlayer({
   src, poster, startAt = 0, autoPlay = true, onProgress, onEnded, className = '',
   controls = true, muted = false, paused = false, onTick, onMutedFallback,
-  fit = 'contain', quiet = false, onPlaying, onVideoRef,
+  fit = 'contain', quiet = false, onPlaying, onVideoRef, onQuality,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const onVideoRefRef = useRef(onVideoRef)
+  const onQualityRef = useRef(onQuality)
+  onQualityRef.current = onQuality
   onVideoRefRef.current = onVideoRef
   useEffect(() => {
     onVideoRefRef.current?.(videoRef.current)
@@ -86,6 +102,23 @@ export default function VideoPlayer({
           p.configure({ streaming: { bufferingGoal: 20, rebufferingGoal: 2 } })
           p.addEventListener('error', (e: any) => setError(e?.detail?.message || 'Playback error'))
           await p.load(src, startAt > 0 ? startAt : null)
+          type VTrack = { id: number; width: number; height: number; bandwidth: number; active: boolean }
+          const tracks = () => p.getVariantTracks() as VTrack[]
+          // Vertical video: name the quality by its short side (720p, not 1280p), as viewers expect
+          const label = (t: VTrack) => Math.min(t.width || t.height, t.height || t.width)
+          const pick = (h: number) => tracks().filter(t => label(t) === h).sort((a, b) => b.bandwidth - a.bandwidth)[0]
+          onQualityRef.current?.({
+            heights: () => [...new Set(tracks().map(label).filter(Boolean))].sort((a, b) => b - a),
+            activeHeight: () => { const t = tracks().find(x => x.active); return t ? label(t) : null },
+            isAuto: () => !!p.getConfiguration().abr.enabled,
+            setAuto: () => p.configure({ abr: { enabled: true } }),
+            setHeight: (h: number) => {
+              const t = pick(h)
+              if (!t) return
+              p.configure({ abr: { enabled: false } })
+              p.selectVariantTrack(t as never, true)
+            },
+          })
         }
         if (cancelled) return
         setLoading(false)
@@ -108,6 +141,7 @@ export default function VideoPlayer({
 
     return () => {
       cancelled = true
+      onQualityRef.current?.(null)
       player?.destroy().catch(() => {})
     }
   }, [src, startAt, autoPlay])

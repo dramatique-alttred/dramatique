@@ -108,7 +108,7 @@ const SIDE = 0.34 // left / right third of the picture
  * Vertical swipes still scroll the feed (touch-action: pan-y).
  */
 export function TapHoldLayer({
-  video, paused, onToggle, className = '', onTouch,
+  video, paused, onToggle, className = '', onTouch, baseRate = 1,
 }: {
   video: HTMLVideoElement | null
   paused: boolean
@@ -116,6 +116,8 @@ export function TapHoldLayer({
   className?: string
   /** Called on any touch, so the player can reveal its overlay for a moment */
   onTouch?: () => void
+  /** The speed chosen in Playback Settings — what a released hold goes back to */
+  baseRate?: number
 }) {
   const [fast, setFast] = useState<'left' | 'right' | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -124,7 +126,7 @@ export function TapHoldLayer({
 
   const stopFast = () => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null }
-    if (held.current && video) video.playbackRate = 1
+    if (held.current && video) video.playbackRate = baseRate
     setFast(null)
   }
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
