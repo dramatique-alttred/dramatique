@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Crown, Check, Play, Download, Gift, Film, Shield, Globe, Clock } from '@/components/ui/icons'
 import type { AppIcon } from '@/components/ui/icons'
+import { track } from '@/lib/analytics'
 
 const PERKS: { icon: AppIcon; title: string; sub: string }[] = [
   { icon: Film,     title: 'Unlimited episodes',     sub: 'No coins needed, fresh dramas every week' },
@@ -91,7 +92,7 @@ export default function MemberPage() {
         {/* CTA — pinned above the bottom bar on phones */}
         <div className="fixed left-0 right-0 bottom-[3.9rem] md:static z-40 px-5 pb-3 pt-6 md:p-0 bg-gradient-to-t from-brand-black via-brand-black/95 to-transparent">
           <div className="max-w-lg mx-auto">
-            <button className="w-full bg-brand-red hover:bg-red-600 text-white font-black py-3.5 rounded-full transition-colors text-base">
+            <button onClick={() => track('join_membership_clicked', { plan })} className="w-full bg-brand-red hover:bg-red-600 text-white font-black py-3.5 rounded-full transition-colors text-base">
               Join Now — {price(current)}/{current.per}
             </button>
             <p className="text-brand-muted text-[10px] text-center mt-2">Auto-renews · Cancel anytime · Secure payment</p>
