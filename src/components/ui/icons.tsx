@@ -7,6 +7,10 @@ import { forwardRef } from 'react'
 import type { Icon as PhosphorIcon, IconProps, IconWeight } from '@phosphor-icons/react/dist/lib/types'
 import { AppleLogoIcon } from '@phosphor-icons/react/dist/csr/AppleLogo'
 import { ListBulletsIcon } from '@phosphor-icons/react/dist/csr/ListBullets'
+import { GaugeIcon } from '@phosphor-icons/react/dist/csr/Gauge'
+import { MonitorPlayIcon } from '@phosphor-icons/react/dist/csr/MonitorPlay'
+import { PictureInPictureIcon } from '@phosphor-icons/react/dist/csr/PictureInPicture'
+import { DotsThreeVerticalIcon } from '@phosphor-icons/react/dist/csr/DotsThreeVertical'
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise'
 import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft'
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/csr/ArrowRight'
@@ -188,6 +192,10 @@ export const Star = make(StarIcon, 'Star')
 export const Tag = make(TagIcon, 'Tag')
 export const AppleLogo = make(AppleLogoIcon, 'AppleLogo')
 export const ListBullets = make(ListBulletsIcon, 'ListBullets')
+export const Gauge = make(GaugeIcon, 'Gauge')
+export const MonitorPlay = make(MonitorPlayIcon, 'MonitorPlay')
+export const PictureInPicture = make(PictureInPictureIcon, 'PictureInPicture')
+export const MoreVertical = make(DotsThreeVerticalIcon, 'MoreVertical')
 export const Trash2 = make(TrashIcon, 'Trash2')
 export const TrendingUp = make(TrendUpIcon, 'TrendingUp')
 export const Upload = make(UploadSimpleIcon, 'Upload')
