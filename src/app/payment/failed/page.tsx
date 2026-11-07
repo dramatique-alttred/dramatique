@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+export const metadata = { title: 'Payment failed', robots: { index: false, follow: false } }
+
 export default function PaymentFailedPage() {
   return (
     <main className="min-h-screen bg-brand-black pt-20 pb-24 flex items-center justify-center px-4">

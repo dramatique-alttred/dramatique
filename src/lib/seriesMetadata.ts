@@ -31,7 +31,7 @@ export async function seriesMetadata(slug: string, path: 'watch' | 'series'): Pr
     const images = image ? [{ url: image, alt: s.title }] : undefined
 
     return {
-      title,
+      title: { absolute: title },
       description,
       alternates: { canonical: `/${path}/${slug}` },
       openGraph: { type: 'video.tv_show', siteName: 'Dramatique', title, description, images, url: `/${path}/${slug}` },

@@ -1,6 +1,6 @@
 import { WifiOff } from '@/components/ui/icons'
 
-export const metadata = { title: 'Offline — Dramatique' }
+export const metadata = { title: 'Offline' }
 
 /**
  * Served by the service worker when a page is requested with no connection and no cached copy.

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { usePwaStore, type BeforeInstallPromptEvent } from '@/store/pwaStore'
+import { track } from '@/lib/analytics'
 import { Download, ShareIOS, PlusSquare, X } from '@/components/ui/icons'
 
 const DISMISS_KEY = 'dq_install_dismissed_at'
@@ -48,9 +49,12 @@ export default function PwaManager() {
       setInstallEvent(e as BeforeInstallPromptEvent)
     }
     const onInstalled = () => {
+      track('pwa_installed')
       setInstallEvent(null)
       setShow(false)
     }
+    const early = (window as Window & { __dqInstall?: Event }).__dqInstall
+    if (early) onPrompt(early)
     window.addEventListener('beforeinstallprompt', onPrompt)
     window.addEventListener('appinstalled', onInstalled)
     return () => {
@@ -107,7 +111,7 @@ export default function PwaManager() {
       </div>
       {installEvent && (
         <button
-          onClick={async () => { if (!(await install())) dismiss() }}
+          onClick={async () => { track('pwa_install_clicked', { source: 'popup' }); if (!(await install())) dismiss() }}
           className="btn-primary w-full mt-3 py-2.5 inline-flex items-center justify-center gap-2 text-sm"
         >
           <Download size={16} /> Install app
