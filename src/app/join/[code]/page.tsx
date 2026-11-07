@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+export const metadata = { title: 'Join Dramatique', robots: { index: false, follow: false } }
+
 export default function ReferralLandingPage({ params }: { params: { code: string } }) {
   return (
     <main className="min-h-screen bg-brand-black flex items-center justify-center px-4 pt-16">

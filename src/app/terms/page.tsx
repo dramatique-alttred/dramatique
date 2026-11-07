@@ -1,3 +1,5 @@
+
+export const metadata = { title: 'Terms of Service' }
 export default function TermsPage() {
   const sections = [
     { title: '1. Acceptance of Terms', content: 'By accessing or using Dramatique, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service. We reserve the right to update these terms at any time with notice provided through the platform.' },
