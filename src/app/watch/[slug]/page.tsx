@@ -10,7 +10,7 @@ import { ScrubBar, TapHoldLayer } from '@/components/player/ReelControls'
 import { usePlaybackTicket, useSeriesDetail, useSeriesAccess, useSavedIds, useToggleSave, useUnlockEpisode, useSaveProgress } from '@/hooks'
 import { useCoinStore } from '@/store'
 import { useUIStore } from '@/store/uiStore'
-import { Play, Lock, Bookmark, Check, Share2, ArrowLeft, Volume2, VolumeX, RotateCcw, ChevronUp, ChevronDown } from '@/components/ui/icons'
+import { Play, Lock, Bookmark, Check, Share2, ArrowLeft, Volume2, VolumeX, RotateCcw, ChevronUp, ChevronDown, ListBullets, Crown, Download } from '@/components/ui/icons'
 import type { Episode, SeriesDetail } from '@/types'
 
 // Same key the series page uses — opting in once applies to every binge
@@ -310,7 +310,8 @@ function WatchInner({ slug }: { slug: string }) {
 
   return (
     <main className="fixed inset-0 z-[70] bg-black" onPointerMove={onPointerMove}>
-      <div ref={scroller} onScroll={onScroll} className="h-full overflow-y-scroll snap-y snap-mandatory scroll-hide overscroll-contain">
+      {/* On phones the episodes stop above a footer strip (membership + download) */}
+      <div ref={scroller} onScroll={onScroll} className="absolute inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] md:bottom-0 overflow-y-scroll snap-y snap-mandatory scroll-hide overscroll-contain">
         {series && episodes.map((ep, i) => (
           <section key={ep.id} className="relative h-full w-full snap-start snap-always flex items-start md:items-center justify-center overflow-hidden">
             <div className="hidden md:block absolute inset-0">
@@ -365,15 +366,31 @@ function WatchInner({ slug }: { slug: string }) {
           </div>
 
           {/* Side rail */}
-          <div className={`absolute right-3 bottom-8 md:bottom-10 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-5 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`absolute right-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1.5rem)] md:bottom-10 md:right-[calc(50%-14rem)] z-10 flex flex-col items-center gap-4 transition-opacity duration-300 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button onClick={() => toggleSave.mutate(series.id)} aria-label={saved ? 'Remove from My List' : 'Add to My List'} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
               <span className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur ${saved ? 'bg-brand-red' : 'bg-black/45'}`}>
                 {saved ? <Check size={20} className="text-white" /> : <Bookmark size={20} className="text-white" />}
               </span>
+              <span className="text-white text-[10px] font-semibold drop-shadow">{saved ? 'Saved' : 'My List'}</span>
+            </button>
+            <button onClick={() => setPickerOpen(true)} aria-label="Episodes" className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
+              <span className="w-11 h-11 rounded-full bg-black/45 backdrop-blur flex items-center justify-center"><ListBullets size={20} className="text-white" /></span>
+              <span className="text-white text-[10px] font-semibold drop-shadow">Episodes</span>
             </button>
             <button onClick={share} aria-label="Share" className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
               <span className="w-11 h-11 rounded-full bg-black/45 backdrop-blur flex items-center justify-center"><Share2 size={20} className="text-white" /></span>
+              <span className="text-white text-[10px] font-semibold drop-shadow">Share</span>
             </button>
+          </div>
+
+          {/* Footer strip (phones): join membership · download */}
+          <div className="md:hidden absolute left-0 right-0 bottom-0 z-10 h-[calc(3.5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-black flex items-center justify-between px-4">
+            <Link href="/vip" className="flex items-center gap-1.5 bg-brand-gold/90 text-black text-xs font-bold px-3.5 py-2 rounded-full active:scale-95 transition-transform">
+              <Crown size={14} weight="fill" /> Join membership
+            </Link>
+            <Link href="/download" className="flex items-center gap-1.5 text-white text-sm font-semibold active:scale-95 transition-transform">
+              <Download size={16} /> Download
+            </Link>
           </div>
 
           {/* Desktop up/down */}

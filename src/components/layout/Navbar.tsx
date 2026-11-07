@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, Globe, Smartphone, LogIn, ChevronDown, X, Menu, Check } from '@/components/ui/icons'
+import { Search, Globe, Smartphone, LogIn, ChevronDown, X, Menu } from '@/components/ui/icons'
 import { LANGUAGES, GENRES } from '@/types'
 import LoginModal from '@/components/ui/LoginModal'
 import { useAuthStore } from '@/store/authStore'
@@ -96,7 +96,6 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
   const isLoggedIn = useAuthStore(s => s.isLoggedIn)
-  const [mobileLang, setMobileLang] = useState(LANGUAGES[0])
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20)
@@ -154,26 +153,6 @@ export default function Navbar() {
               <button onClick={() => setMobileOpen(false)} className="text-white hover:text-brand-red transition-colors">
                 <X size={22} />
               </button>
-            </div>
-
-            {/* LANGUAGE — pulled to primary position at the top */}
-            <div className="px-4 pt-5">
-              <p className="text-brand-subtle text-xs uppercase tracking-widest mb-2.5 font-semibold flex items-center gap-1.5">
-                <Globe size={13} /> Language
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {LANGUAGES.map(lang => (
-                  <button
-                    key={lang.code}
-                    onClick={() => setMobileLang(lang)}
-                    className={`flex items-center gap-1.5 text-xs py-2.5 px-2 rounded-xl border transition-all ${mobileLang.code === lang.code ? 'bg-brand-red/15 border-brand-red/50 text-white font-semibold' : 'border-brand-border text-brand-text hover:border-brand-muted'}`}
-                  >
-                    <span>{lang.flag}</span>
-                    <span className="truncate">{lang.label}</span>
-                    {mobileLang.code === lang.code && <Check size={11} className="text-brand-red ml-auto flex-shrink-0" />}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* NAV LINKS */}
