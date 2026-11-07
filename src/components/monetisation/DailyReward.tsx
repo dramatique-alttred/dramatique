@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { usePathname } from 'next/navigation'
 import { Gift, X, Check, Coins } from '@/components/ui/icons'
 import { useDailyReward, useClaimReward } from '@/hooks'
@@ -57,9 +58,11 @@ function DailyRewardDialog({ onClose }: { onClose: () => void }) {
 
   const doClaim = () => claim.mutate(undefined, { onSuccess: d => setClaimed(d.coins) })
 
-  return (
+  // Portaled to <body>: the navbar is its own stacking layer, so inside it the dialog
+  // would sit under the bottom tab bar on phones
+  return createPortal(
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-      <div className="w-full max-w-sm bg-brand-card border border-brand-border rounded-2xl overflow-hidden animate-slide-up" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-sm max-h-full overflow-y-auto bg-brand-card border border-brand-border rounded-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
         <div className="relative px-5 pt-6 pb-4 text-center bg-gradient-to-b from-brand-red/20 to-transparent">
           <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 text-brand-subtle hover:text-white"><X size={20} /></button>
           <div className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center ${claimed !== null ? 'bg-green-500/20 animate-scale-in' : 'bg-brand-red/20'}`}>
@@ -87,7 +90,8 @@ function DailyRewardDialog({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
