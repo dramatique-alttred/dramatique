@@ -163,6 +163,7 @@ export default function Navbar() {
                 { href: '/shorts', label: 'Shorts' },
                 { href: '/categories', label: 'Categories' },
                 { href: '/new-hot', label: 'New & Hot' },
+                { href: '/rewards', label: 'Rewards' },
                 { href: '/blog', label: 'Blog' },
               ].map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
