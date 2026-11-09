@@ -157,7 +157,7 @@ export default function AddSeriesPage() {
                 </FormField>
               )}
 
-              <FormField label="Tags" hint="Comma separated — e.g. billionaire, fake-marriage, office">
+              <FormField label="Tags" hint="Comma separated — e.g. billionaire, fake-marriage, office. Add 'sensitive' to show a content warning before the drama plays.">
                 <Input value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="billionaire, CEO, romance, contract" />
               </FormField>
             </div>

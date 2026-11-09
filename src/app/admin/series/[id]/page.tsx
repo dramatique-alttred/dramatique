@@ -172,6 +172,10 @@ export default function EditSeriesPage({ params }: { params: { id: string } }) {
                   </div>
                 </FormField>
               )}
+
+              <FormField label="Tags" hint="Comma separated. Add 'sensitive' to show a content warning before the drama plays.">
+                <Input value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="billionaire, CEO, romance, contract" />
+              </FormField>
             </div>
           </AdminCard>
 

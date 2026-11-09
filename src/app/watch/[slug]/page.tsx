@@ -15,7 +15,7 @@ import { useCoinStore } from '@/store'
 import { useUIStore } from '@/store/uiStore'
 import { installOrContinue } from '@/store/pwaStore'
 import { track } from '@/lib/analytics'
-import { Play, Lock, Bookmark, Check, Share2, ArrowLeft, Volume2, VolumeX, RotateCcw, ChevronUp, ChevronDown, ListBullets, Crown, Download, Gauge, MoreVertical } from '@/components/ui/icons'
+import { Play, Lock, AlertTriangle, Bookmark, Check, Share2, ArrowLeft, Volume2, VolumeX, RotateCcw, ChevronUp, ChevronDown, ListBullets, Crown, Download, Gauge, MoreVertical } from '@/components/ui/icons'
 import type { Episode, SeriesDetail } from '@/types'
 
 // Same key the series page uses — opting in once applies to every binge
@@ -24,7 +24,7 @@ const AUTO_UNLOCK_KEY = 'dq.autoUnlock'
 interface AccessInfo { is_vip?: boolean; can_watch_all?: boolean; unlocked_episode_ids?: string[] }
 
 function EpisodeCard({
-  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, onUiVisible, activity, total, soundLocked, onSoundBlocked, onSoundUnlock, speed, qualityChoice, onMedia,
+  series, episode, locked, active, preload, muted, onMutedChange, onFinished, onUnlockClick, isLast, nextAvailable, onReplay, onOpenPicker, onUiVisible, activity, total, soundLocked, onSoundBlocked, onSoundUnlock, speed, qualityChoice, onMedia, hold,
 }: {
   series: SeriesDetail
   episode: Episode
@@ -52,6 +52,8 @@ function EpisodeCard({
   qualityChoice: 'auto' | number
   /** The active card reports its video + quality controls for the settings sheet */
   onMedia: (m: { video: HTMLVideoElement | null; quality: QualityApi | null }) => void
+  /** A content warning is up: nothing plays until the viewer continues */
+  hold: boolean
 }) {
   const { data: ticket, isError } = usePlaybackTicket(episode.id, !locked && (active || preload))
   const saveProgress = useSaveProgress()
@@ -112,7 +114,7 @@ function EpisodeCard({
           controls={false}
           fit="cover"
           muted={muted}
-          paused={!active || paused || done}
+          paused={!active || paused || done || hold}
           quiet={!active}
           onMutedFallback={() => { onMutedChange(true); onSoundBlocked() }}
           onVideoRef={setVideoEl}
@@ -218,6 +220,18 @@ function WatchInner({ slug }: { slug: string }) {
   const [muted, setMuted] = useState(false)
   // Set when the browser blocked sound-on autoplay (e.g. a shared link opened with no tap first)
   const [soundLocked, setSoundLocked] = useState(false)
+  // Series tagged "sensitive" in the admin ask before they play (remembered per series on this device)
+  const [sensitiveOk, setSensitiveOk] = useState(false)
+  const isSensitive = !!series?.tags?.some(t => ['sensitive', 'mature'].includes(t.trim().toLowerCase()))
+  const gated = isSensitive && !sensitiveOk
+  useEffect(() => {
+    if (!series) return
+    try { setSensitiveOk(localStorage.getItem(`dq.sensitiveOk.${series.slug}`) === '1') } catch { /* storage blocked */ }
+  }, [series?.slug]) // eslint-disable-line react-hooks/exhaustive-deps
+  const acceptSensitive = () => {
+    setSensitiveOk(true)
+    try { if (series) localStorage.setItem(`dq.sensitiveOk.${series.slug}`, '1') } catch { /* storage blocked */ }
+  }
   const unlockSound = useCallback(() => { setMuted(false); setSoundLocked(false) }, [])
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [arrivedByAutoplay, setArrivedByAutoplay] = useState(false)
@@ -373,6 +387,7 @@ function WatchInner({ slug }: { slug: string }) {
                 speed={speed}
                 qualityChoice={qualityChoice}
                 onMedia={setMedia}
+                hold={gated}
                 onFinished={() => {
                   if (i < episodes.length - 1) { autoplayNav.current = true; go(1) }
                 }}
@@ -468,6 +483,21 @@ function WatchInner({ slug }: { slug: string }) {
             </button>
           </div>
         </>
+      )}
+
+      {/* Content warning for series tagged "sensitive" */}
+      {gated && series && (
+        <div className="absolute inset-0 z-[40] bg-black/90 backdrop-blur-md flex items-center justify-center px-6 animate-fade-in" role="alertdialog" aria-label="Sensitive content warning">
+          <div className="w-full max-w-xs bg-[#1c1c1e] rounded-2xl p-6 text-center">
+            <AlertTriangle size={44} className="text-white mx-auto mb-4" />
+            <h2 className="text-white font-bold text-lg mb-2">Sensitive Content Warning</h2>
+            <p className="text-brand-subtle text-sm leading-relaxed mb-6">
+              This content may contain scenes that some viewers may find disturbing. Continue watching?
+            </p>
+            <button onClick={acceptSensitive} className="w-full btn-primary py-3 mb-3">Continue</button>
+            <button onClick={() => (window.history.length > 1 ? router.back() : router.push('/'))} className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold text-sm py-3 rounded-xl transition-colors">Go Back</button>
+          </div>
+        </div>
       )}
 
       {/* Playback Settings: quality · speed · picture-in-picture */}
