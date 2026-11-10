@@ -100,18 +100,14 @@ export default function Footer() {
 
         {/* BOTTOM ROW */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-brand-muted text-xs">
+          <p className="text-[#8b8b9a] text-xs">
             © 2026 Dramatique. All rights reserved. Built by{' '}
             <a href="https://alttrednexxus.com" target="_blank" rel="noopener noreferrer" className="text-brand-red hover:text-red-400 transition-colors">Alttred Nexxus</a>
           </p>
           <div className="flex items-center gap-4">
-            <Link href="/terms" className="text-brand-muted hover:text-white text-xs transition-colors">Terms</Link>
-            <Link href="/privacy" className="text-brand-muted hover:text-white text-xs transition-colors">Privacy</Link>
-            <Link href="/refund" className="text-brand-muted hover:text-white text-xs transition-colors">Refund</Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-brand-muted text-xs">All systems operational</span>
+            <Link href="/terms" className="text-[#8b8b9a] hover:text-white text-xs transition-colors">Terms</Link>
+            <Link href="/privacy" className="text-[#8b8b9a] hover:text-white text-xs transition-colors">Privacy</Link>
+            <Link href="/refund" className="text-[#8b8b9a] hover:text-white text-xs transition-colors">Refund</Link>
           </div>
         </div>
       </div>

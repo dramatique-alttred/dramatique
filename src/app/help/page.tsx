@@ -10,10 +10,10 @@ const FAQS = [
   { q: 'What is VIP and what does it include?', a: 'VIP gives you unlimited access to all episodes with no coins needed, ad-free viewing, early access to new series, and all 12 language options. VIP costs ₹950/month or ₹5,700/year (50% savings).' },
   { q: 'Can I watch on multiple devices?', a: 'Yes. Your Dramatique account works on any device — phone, tablet, or desktop. Your watch history and coin balance sync automatically across all devices.' },
   { q: 'How do I cancel my VIP subscription?', a: 'Go to Profile → Settings → Account → Manage Subscription. You can cancel anytime and will retain VIP access until the end of your current billing period.' },
-  { q: 'My payment failed — what do I do?', a: 'Try again with a different payment method, or check with your bank. If you were charged but coins weren\'t credited, contact support@dramatique.com with your transaction ID.' },
+  { q: 'My payment failed — what do I do?', a: 'Try again with a different payment method, or check with your bank. If you were charged but coins weren\'t credited, contact support@dramatique.net with your transaction ID.' },
   { q: 'How do I change the language?', a: 'Go to Profile → Settings → Language, and select from our 12 available languages. You can also change language on the episode player screen.' },
   { q: 'Can I download episodes to watch offline?', a: 'Offline download is coming soon for VIP members. For now, all content streams online.' },
-  { q: 'How do I report a bug or issue?', a: 'Contact us at support@dramatique.com or use the Contact Us page. Please include your device type, browser, and a description of the issue.' },
+  { q: 'How do I report a bug or issue?', a: 'Contact us at support@dramatique.net or use the Contact Us page. Please include your device type, browser, and a description of the issue.' },
   { q: 'Why is an episode not playing?', a: 'Check your internet connection first. If the issue persists, try refreshing the page or clearing your browser cache. If a specific episode is broken, contact support with the series name and episode number.' },
 ]
 

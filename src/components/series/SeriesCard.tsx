@@ -1,5 +1,6 @@
 'use client'
 
+import { SHOW_STATS } from '@/lib/flags'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -114,7 +115,7 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
           )}
 
           {/* Bottom meta: views (or rating) sitting on the gradient */}
-          {!ranked && (
+          {!ranked && SHOW_STATS && (
             <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
               {series.views ? (
                 <span className="flex items-center gap-1 text-white/75 text-[10px] font-medium">
@@ -167,7 +168,7 @@ export default function SeriesCard({ series, size = 'md', rank }: { series: Seri
               <div className="flex items-center gap-1.5 mb-1">
                 {series.is_vip && <span className="flex items-center gap-1 bg-brand-gold text-black text-[9px] font-black px-1.5 py-0.5 rounded uppercase"><Crown size={8} className="fill-black" />VIP</span>}
                 {series.is_new && <span className="badge-new">New</span>}
-                {series.rating && <span className="flex items-center gap-0.5 text-brand-gold text-[10px] font-bold ml-auto"><Star size={9} fill="currentColor" />{series.rating}</span>}
+                {SHOW_STATS && series.rating && <span className="flex items-center gap-0.5 text-brand-gold text-[10px] font-bold ml-auto"><Star size={9} fill="currentColor" />{series.rating}</span>}
               </div>
               <h3 className="text-white font-bold text-sm leading-tight">{series.title}</h3>
             </div>

@@ -12,7 +12,7 @@ const STEPS = [
 export default function InvitePage() {
   const [copied, setCopied] = useState(false)
   const referralCode = 'DRAMA-X7K2'
-  const referralLink = `https://dramatique.com/join/${referralCode}`
+  const referralLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://www.dramatique.net'}/join/${referralCode}`
 
   const copy = () => {
     navigator.clipboard.writeText(referralLink)

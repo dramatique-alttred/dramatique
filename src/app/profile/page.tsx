@@ -32,7 +32,7 @@ export default function ProfilePage() {
   const referralCode = user?.referral_code || '—'
 
   const copyReferral = () => {
-    navigator.clipboard.writeText(`Join Dramatique and get 10 free coins! Use my code: ${referralCode} — dramatique.com`)
+    navigator.clipboard.writeText(`Join Dramatique and get 10 free coins! Use my code: ${referralCode} — ${window.location.origin}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
