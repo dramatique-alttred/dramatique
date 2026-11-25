@@ -1,5 +1,6 @@
 'use client'
 
+import { SHOW_STATS } from '@/lib/flags'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -54,7 +55,7 @@ export default function HeroBanner({ series, loading = false }: { series: Series
                 </span>
               )}
               <span className="text-brand-red text-xs font-black uppercase tracking-[0.2em]">{active.genre}</span>
-              {active.rating && (
+              {SHOW_STATS && active.rating && (
                 <span className="flex items-center gap-1 text-brand-gold text-xs font-bold">
                   <Star size={12} fill="currentColor" /> {active.rating}
                 </span>

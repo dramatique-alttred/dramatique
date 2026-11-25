@@ -7,6 +7,7 @@ import PwaManager from '@/components/pwa/PwaManager'
 import Analytics from '@/components/Analytics'
 import AppBadge from '@/components/AppBadge'
 import WelcomePrompts from '@/components/WelcomePrompts'
+import SeoIntro from '@/components/SeoIntro'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dramatique-shorts.vercel.app'
 const TITLE = 'Dramatique — Short Dramas. Big Emotions. Endless Stories.'
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <WelcomePrompts />
           </ToastProvider>
         </Providers>
+        <SeoIntro />
       </body>
     </html>
   )

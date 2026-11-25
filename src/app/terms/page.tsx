@@ -11,7 +11,7 @@ export default function TermsPage() {
     { title: '7. Prohibited Conduct', content: 'You agree not to use the service for any unlawful purpose, to attempt to gain unauthorised access to any part of the service, to scrape or harvest content, or to interfere with the proper functioning of the platform.' },
     { title: '8. Limitation of Liability', content: 'Dramatique is provided on an "as is" basis. We do not warrant that the service will be uninterrupted or error-free. To the maximum extent permitted by law, we disclaim all liability for any indirect, incidental, or consequential damages.' },
     { title: '9. Governing Law', content: 'These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of Bengaluru, Karnataka.' },
-    { title: '10. Contact', content: 'For questions about these terms, contact us at legal@dramatique.com or through our Help & Support page.' },
+    { title: '10. Contact', content: 'For questions about these terms, contact us at legal@dramatique.net or through our Help & Support page.' },
   ]
 
   return (

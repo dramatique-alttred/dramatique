@@ -1,5 +1,6 @@
 'use client'
 
+import { SHOW_STATS } from '@/lib/flags'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -286,7 +287,7 @@ export default function SeriesDetailPage({ params }: { params: { slug: string } 
           <div className="flex-1 min-w-0 px-4 md:px-0 py-5 md:py-2">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-brand-red text-xs font-black uppercase tracking-widest">{series.genre}</span>
-              {series.rating ? <span className="flex items-center gap-1 text-brand-gold text-xs font-bold"><Star size={11} fill="currentColor" />{series.rating}</span> : null}
+              {SHOW_STATS && series.rating ? <span className="flex items-center gap-1 text-brand-gold text-xs font-bold"><Star size={11} fill="currentColor" />{series.rating}</span> : null}
             </div>
             <h1 className="text-white font-bold text-3xl leading-tight mb-2">{series.title}</h1>
             <p className="text-brand-subtle text-sm mb-4">
