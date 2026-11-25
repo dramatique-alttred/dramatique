@@ -6,6 +6,7 @@ import ConsumerChrome from '@/components/layout/ConsumerChrome'
 import PwaManager from '@/components/pwa/PwaManager'
 import Analytics from '@/components/Analytics'
 import AppBadge from '@/components/AppBadge'
+import WelcomePrompts from '@/components/WelcomePrompts'
 import SeoIntro from '@/components/SeoIntro'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dramatique-shorts.vercel.app'
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <PwaManager />
             <Analytics />
             <AppBadge />
+            <WelcomePrompts />
           </ToastProvider>
         </Providers>
         <SeoIntro />

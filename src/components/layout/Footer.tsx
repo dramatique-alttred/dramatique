@@ -24,6 +24,7 @@ const LINKS = {
   Account: [
     { label: 'My List', href: '/my-list' },
     { label: 'Watch History', href: '/history' },
+    { label: 'Rewards', href: '/rewards' },
     { label: 'Coins', href: '/coins' },
     { label: 'VIP Plans', href: '/vip' },
   ],
