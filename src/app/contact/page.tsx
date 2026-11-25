@@ -24,7 +24,7 @@ export default function ContactPage() {
         {/* CONTACT OPTIONS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
           {[
-            { icon: Mail, label: 'Email', value: 'support@dramatique.com', desc: 'For general queries' },
+            { icon: Mail, label: 'Email', value: 'support@dramatique.net', desc: 'For general queries' },
             { icon: MessageCircle, label: 'Live Chat', value: 'Coming Soon', desc: 'Real-time support' },
             { icon: Clock, label: 'Response Time', value: '< 24 hours', desc: 'Business days' },
           ].map(({ icon: Icon, label, value, desc }) => (

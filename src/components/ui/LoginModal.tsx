@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, Phone, Mail, ChevronLeft, Loader2, Clock, MailCheck } from '@/components/ui/icons'
 import { signInWithEmail, signInWithGoogle } from '@/lib/auth'
 
@@ -18,9 +18,18 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  if (!isOpen) return null
-
   const reset = () => { setStep('options'); setEmail(''); setError('') }
+
+  // Escape closes the window, like any dialog
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { reset(); onClose() } }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
 
   const handleGoogle = async () => {
     setLoading(true)
@@ -51,14 +60,14 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   }
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-brand-card border border-brand-border rounded-2xl overflow-hidden animate-slide-up">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => { reset(); onClose() }}>
+      <div role="dialog" aria-modal="true" aria-label="Sign in to Dramatique" onClick={e => e.stopPropagation()} className="w-full max-w-sm bg-brand-card border border-brand-border rounded-2xl overflow-hidden animate-slide-up">
 
         {/* HEADER */}
         <div className="flex items-center justify-between p-5 border-b border-brand-border">
           <div className="flex items-center gap-2">
             {step !== 'options' && (
-              <button onClick={() => setStep('options')} className="text-brand-subtle hover:text-white mr-1">
+              <button onClick={() => setStep('options')} aria-label="Back" className="text-brand-subtle hover:text-white mr-1">
                 <ChevronLeft size={20} />
               </button>
             )}
@@ -67,7 +76,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
               <span className="font-display text-white font-black text-base leading-none block -mt-0.5">TIQUE</span>
             </div>
           </div>
-          <button onClick={() => { reset(); onClose() }} className="text-brand-subtle hover:text-white">
+          <button onClick={() => { reset(); onClose() }} aria-label="Close" className="text-brand-subtle hover:text-white">
             <X size={20} />
           </button>
         </div>

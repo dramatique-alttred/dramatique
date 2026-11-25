@@ -18,7 +18,7 @@ export default function RefundPage() {
             { title: 'Failed Payments', icon: '❌', content: 'If your payment failed but you were still charged by your bank, please contact us with your transaction ID. We will investigate and ensure a refund is processed within 5-7 business days.' },
             { title: 'Duplicate Charges', icon: '🔄', content: 'If you were charged twice for the same purchase, please contact support immediately with both transaction IDs. Duplicate charges will be refunded within 3-5 business days.' },
             { title: 'Technical Issues', icon: '🛠️', content: 'If a technical issue prevented you from accessing content you paid for, contact support within 7 days. We will either restore access or provide a coin credit of equivalent value.' },
-            { title: 'How to Request a Refund', icon: '📧', content: 'Email support@dramatique.com with your account email, transaction ID, amount, and reason for the refund request. We aim to respond within 24 hours on business days.' },
+            { title: 'How to Request a Refund', icon: '📧', content: 'Email support@dramatique.net with your account email, transaction ID, amount, and reason for the refund request. We aim to respond within 24 hours on business days.' },
           ].map(item => (
             <div key={item.title} className="bg-brand-card border border-brand-border rounded-xl p-5">
               <div className="flex items-center gap-3 mb-3">
