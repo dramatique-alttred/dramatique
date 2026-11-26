@@ -25,7 +25,8 @@ export async function getFeed(_req: Request, res: Response) {
 
 /** GET /api/v1/catalog/hero */
 export async function getHero(_req: Request, res: Response) {
-  cachePublic(res, 300)
+  // Same short cache as the feed, so publishing or unpublishing shows up in minutes
+  cachePublic(res)
   res.json(await catalog.getHero())
 }
 
